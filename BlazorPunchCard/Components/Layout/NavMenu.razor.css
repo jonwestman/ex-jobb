@@ -1,0 +1,125 @@
+.navbar-nav {
+  list-style-type: none;
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  height: 100%;
+}
+
+.nav-item {
+  font-size: 2rem;
+  padding-bottom: 1rem;
+}
+
+.nav-item ::deep .navbarText {
+  font-size: 0.9rem;
+}
+
+.nav-item ::deep .nav-link:hover + .navbarText {
+  color: #ffffff;
+}
+
+.nav-item ::deep .nav-link.active + .navbarText {
+  color: black;
+}
+
+.nav-item ::deep .nav-link {
+  color: #d7d7d7;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding-bottom: 0.5rem;
+}
+
+.nav-item ::deep .nav-icon {
+}
+
+.nav-item ::deep a.active {
+  background-color: white;
+  color: black;
+}
+
+.nav-item ::deep .nav-link:hover {
+  background-color: #ffaa19;
+  color: #ffffff;
+}
+
+.navbar-toggler {
+  display: none;
+}
+
+.nav-scrollable {
+  display: none;
+}
+
+@media (min-width: 460px) {
+  .nav-scrollable {
+    display: block;
+    padding-top: 6rem;
+  }
+
+  .navbar.fixed-bottom {
+    display: none;
+  }
+}
+
+@media (max-width: 460px) {
+  .nav-scrollable {
+    display: none;
+  }
+
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 0.1rem;
+    font-size: 0.8rem;
+  }
+
+  .nav-icon {
+    font-size: 1.3rem;
+    margin-left: 0.9rem;
+    margin-right: 0.9rem;
+  }
+
+  .navbarText {
+    font-size: 0.7rem;
+    margin-top: 0.1rem;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .nav-item ::deep .nav-link + .navbarText {
+    color: #ffffff;
+    font-size: 0.7rem;
+  }
+
+  .nav-item ::deep .nav-link:hover + .navbarText {
+    color: #ffffff;
+    font-size: 0.7rem;
+  }
+
+  .nav-item ::deep .nav-link.active + .navbarText {
+    color: #ffffff;
+  }
+
+  .navbar.fixed-bottom {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    z-index: 1000;
+    height: 5.5rem;
+  }
+
+  .navbar-expand.fixed-bottom {
+    background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #31525b 90%);
+  }
+}

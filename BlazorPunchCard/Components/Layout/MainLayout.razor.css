@@ -1,0 +1,293 @@
+.page {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+.sidebar {
+    background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #31525B 70%);
+    text-align: center; /* icons aligned inside sidebar*/
+}
+
+.top-row {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 4.0rem;
+    background-color: #1E2022;
+    z-index: 999;
+}
+
+    .top-row a {
+        color: #F5F5F5;
+        margin-right: 30px;
+        text-decoration: none;
+        transition: background-color 0.3s;
+        padding: 10px;
+        border-radius: 13px;
+    }
+
+    .top-row button {
+        position: relative;
+    }
+
+.dropdown {
+    margin-left: auto; 
+    margin-right: 20px;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+}
+
+.page .menu-items ::deep a {
+    color: #F5F5F5;
+    margin-right: 20px;
+    text-decoration: none;
+    transition: background-color 0.3s;
+    padding: 10px;
+    border-radius: 13px;
+}
+
+    .page .menu-items ::deep a:hover {
+        background-color: #ffaa19;
+        color: #FFFFFF;
+        padding: 10px;
+        border-radius: 13px;
+    }
+
+
+/*Logga*/
+.logo-image {
+    width: 8rem;
+    height: 1.7rem;
+    margin-right: 0.1rem;
+}
+
+.bi {
+    display: inline-block;
+    position: relative;
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-right: 0.75rem;
+    top: -1px;
+    background-size: cover;
+}
+
+.toggle-menu {
+    cursor: pointer;
+    color: #FFFFFF;
+    font-size: 30px;
+    margin-left: auto;
+    padding: 10px;
+}
+
+/*Tillagd second navbar*/
+.top-row-second {
+    background: linear-gradient(to right, rgb(5, 39, 103) 0%, #31525B 70%);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+    justify-content: flex-end;
+    height: 3.5rem;
+    display: flex;
+    align-items: center;
+    position: sticky; 
+    top: 4.0rem; 
+    
+}
+
+    .top-row-second a {
+        color: #F5F5F5;
+        margin-right: 25px;
+        text-decoration: none;
+        transition: background-color 0.3s;
+        padding: 10px;
+        border-radius: 10px;
+    }
+
+    .top-row-second a:hover {
+        background-color: #ffaa19;
+        color: #FFFFFF;
+        padding: 10px;
+        border-radius: 13px;
+    }
+
+.top-row ::deep a:first-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dropdown-menu-custom {
+    min-width: 220px;
+    background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #31525b 90%);
+    color: #ffffff;
+    border: 1px solid #31525B;
+    
+}
+
+.dropdown .dropdown-menu-custom {
+    z-index: 1000;
+}
+    
+@media (max-width: 460px) {
+
+    .page {
+        padding-top: 4.0rem;
+        padding-bottom: 8.0rem;
+    }
+
+    .top-row-second {
+        display: none;
+    }
+
+    .page .menu-items i,
+    .top-row-second a {
+        display: none;
+        /*content:none;*/
+    }
+    
+   
+
+    .customer-navbar.fixed-bottom-customer {
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        z-index: 1000;
+        height: 5rem;
+    }
+
+    .navbar-nav-customer {
+        display: flex;
+        justify-content: center; /* Horisontell centrerad justering */
+        align-items: center;
+        list-style-type: none; /* Ta bort punktlistan */
+        padding: 0; /* Ta bort eventuell padding */
+    }
+
+    .customer-navbar.navbar-expand-customer.fixed-bottom-customer {
+        background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #31525b 90%);
+    }
+
+        .nav-item-customer {
+            display: flex;
+            flex-direction: column; /* Stack icon and text vertically */
+            justify-content: center; /* Horizontally centered */
+            align-items: center; /* Vertically centered */
+            padding: 0.1rem; /* Adjusted padding */
+            font-size: 1.5rem; /* Adjusted font size */
+            align-items: center; /* Align items along their baselines */
+            color: #d7d7d7;
+        }
+
+    .nav-icon-customer {
+        font-size: 1.5rem; /* Adjusted icon size */
+        margin-left: 0.9rem;
+        margin-right: 0.9rem;
+        display: flex; /* L�gg till detta f�r att centrera ikonen */
+        justify-content: center; /* L�gg till detta f�r att centrera ikonen */
+        align-items: center;
+    }
+
+    .navbarText-customer {
+        font-size: 0.7rem; /* Adjusted text size */
+        margin-top: 0.2rem; /* Added margin for better spacing */
+        justify-content: center;
+        align-items: center;
+    }
+
+    .nav-item-customer ::deep .nav-link-customer {
+        color: #d7d7d7;
+        background: none;
+        border-radius: 8px;
+        margin-left: 0.5rem;
+        margin-right: 0.5rem;
+        height: auto; /* Auto height for flexible content */
+        display: flex;
+        flex-direction: column; /* Change to column to stack icon and text vertically */
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding-bottom: 0.1rem;
+    }
+
+    .nav-item-customer ::deep a.active {
+        background-color: white; 
+        color: black;
+    }
+}
+
+@media (min-width: 460px) {
+    .page {
+        flex-direction: row;
+    }
+    
+    .sidebar {
+        width: 6.0rem;
+        height: 100vh;
+        position: sticky;
+        top: 0;
+    }
+
+    .top-row {
+        position: sticky;
+        top: 0;
+        z-index: 999;
+    }
+    
+    .top-row-second {
+        position: sticky;
+        top: 4rem;
+        z-index: 998;
+    }
+
+    .dropdown .dropdown-menu-custom {
+        z-index: 1000;
+    }
+
+        .top-row.auth ::deep a:first-child {
+            flex: 1;
+            text-align: right;
+            width: 0;
+        }
+
+    .top-row, article {
+        padding-left: 2rem !important;
+        padding-right: 1.5rem !important;
+    }
+
+    .customer-navbar.fixed-bottom-customer {
+        display: none;
+    }
+
+    .dropdown-menu-custom {
+        z-index: 1000;
+    }
+}
+
+
+#blazor-error-ui {
+    background: lightyellow;
+    bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+    #blazor-error-ui .dismiss {
+        cursor: pointer;
+        position: absolute;
+        right: 0.75rem;
+        top: 0.5rem;
+    }

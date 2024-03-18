@@ -1,0 +1,31 @@
+.nav-item ::deep .nav-link {
+  color: whitesmoke;
+  background: #31525b;
+  border: solid;
+  border-width: 1px;
+  border-color: black;
+  height: auto;
+  font-size: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding-bottom: 1rem;
+  margin-bottom: 0.2rem;
+}
+
+.nav-item ::deep .nav-icon {
+  background-color: white;
+  color: black;
+}
+
+.nav-item ::deep a.active {
+  background-color: white;
+  color: black;
+}
+
+.nav-item ::deep .nav-link:hover {
+  background-color: #ffaa19;
+  color: #ffffff;
+}

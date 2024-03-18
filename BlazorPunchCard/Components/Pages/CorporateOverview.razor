@@ -1,0 +1,349 @@
+﻿@page "/corporateOverview"
+@using BlazorBootstrap
+@using BlazorPunchCard.Controller
+@using BlazorPunchCard.Data
+@using BlazorPunchCard.Repositories.Interfaces
+@using Microsoft.EntityFrameworkCore
+@using Shared.Models
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@using System.ComponentModel.DataAnnotations
+@rendermode InteractiveServer
+@inject ApplicationDbContext DbContext
+@inject PunchController PunchController
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject DashBoardController DashBoardController
+@inject IDashBoardRepository DashBoardRepository
+@inject IPunchRepository PunchRepository
+
+<Toasts class="p-3" Messages="messages" Placement="ToastsPlacement.TopRight" />
+
+@if (currentUser != null && currentUser.Company != null)
+{
+
+    <h3>Välkommen @currentUser.Company.CompanyName</h3>
+}
+else
+{
+    <p>Företagsinformation saknas för den inloggade användaren.</p>
+}
+
+<div class="container mt-4" style="padding-bottom: 5.0rem;">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-12 col-sm-12 mb-8">
+            <Card style="width: 100%;">
+                <CardBody class="text-center shadow">
+                    <CardTitle><h2 style="font-weight:bold;">Stämpla</h2></CardTitle>
+                    <CardTitle><h4>Ange kundens telefonnummer för att stämpla</h4></CardTitle><br />
+                    <CardText>
+                        <EditForm Model="Input" OnValidSubmit="AddPunch">
+                            <DataAnnotationsValidator />
+
+                            <div class="form-floating mb-3">
+                                <InputText @bind-Value="Input.PhoneNumber" class="form-control" autocomplete="phonenumber" aria-required="true" placeholder="07011122233" />
+                                <label for="phone-number">Telefonnummer</label>
+                                <ValidationMessage For="() => Input.PhoneNumber" class="text-danger" />
+                            </div>
+                            <div class="form-floating">
+                                <select id="punchcard" @bind="Input.SelectedPunchCard" class="form-select">
+                                    @if (punchCardList != null)
+                                    {
+                                        <option value="0" oninvalid="true" aria-disabled="true">Välj Stämpelkort</option>
+                                        @foreach (var punchCard in punchCardList)
+                                        {
+                                            <option value="@punchCard.PunchCardId">
+                                                @punchCard.PunchCardName
+                                            </option>
+                                        }
+                                    }
+                                </select>
+                                <label for="punchcard"></label>
+                                <ValidationMessage For="() => Input.SelectedPunchCard" class="text-danger" />
+                            </div>
+
+                            <br />
+                            <div class="d-flex justify-content-center">
+                                <button type="submit" class="btn btn-warning">Spara och stämpla</button>
+                                <div style="margin-right: 10px;"></div>
+                            </div>
+                        </EditForm>
+                    </CardText>
+                </CardBody>
+            </Card>
+        </div>
+    </div>
+</div>
+
+<div>
+    <table style="margin-left:auto; margin-right:auto;">
+        <thead style="text-align:center;">
+            <tr>
+                <td style="font-size: 25px; font-weight: bold;">@numberOfPunchCards</td>
+                <td style="font-size: 25px; font-weight: bold;">@numberOfActivePunchCards</td>
+                <td style="font-size: 25px; font-weight: bold;">@numberOfRewardsGiven</td>
+                <td style="font-size: 25px; font-weight: bold;">@numberOfRewardsRedeemed</td>
+                <td style="font-size: 25px; font-weight: bold;">@totalNumberOfPunches</td>
+            </tr>
+        </thead>
+        <tbody style="text-align:center;">
+            <tr>
+                <th style="padding: 10px;">Totalt antal kort</th>
+                <th style="padding: 10px;">Antal aktiva kort</th>
+                <th style="padding: 10px;">Rabatter utfärdade</th>
+                <th style="padding: 10px;">Antal använda rabatter</th>
+                <th style="padding: 10px;">Totalt antal utgivna stämplar</th>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<h2 style="padding:10px;">Senaste Transaktioner</h2>
+
+<table class="table table-striped">
+    <thead style="background-color:black; color:white">
+        <tr>
+            <th>Tid & Datum</th>
+            <th>Kund</th>
+            <th>Telefonnummer</th>
+            <th>Transaktionstyp</th>
+            <th>Antal stämplar</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in dashBoardList)
+        {
+            @if (item.TransactionType == "Rabatt tilldelad")
+            {
+                <tr>
+                    <td style="background-color:#D9EEE1">@item.DateAndTime.ToString("yyyy/MM/dd HH:mm:ss")</td>
+                    <td style="background-color:#D9EEE1">@item.CustomerName</td>
+                    <td style="background-color:#D9EEE1">@item.CustomerPhoneNumber</td>
+                    <td style="background-color:#D9EEE1">@item.TransactionType</td>
+                    @if (item.NumberOfPunches is not null)
+                    {
+                        <td>@item.NumberOfPunches</td>
+                    }
+                    else
+                    {
+                        <td style="background-color:#D9EEE1"></td>
+                    }
+                </tr>
+            }
+            else
+            {
+                <tr>
+                    <td>@item.DateAndTime.ToString("yyyy/MM/dd HH:mm:ss")</td>
+                    <td>@item.CustomerName</td>
+                    <td>@item.CustomerPhoneNumber</td>
+                    <td>@item.TransactionType</td>
+                    @if (item.NumberOfPunches is not null)
+                    {
+                        <td>@item.NumberOfPunches</td>
+                    }
+                    else
+                    {
+                        <td></td>
+                    }
+                </tr>
+            }           
+        }
+    </tbody>
+</table>
+<div class="row mt-5"></div>
+
+
+@code {
+    private InputModel Input = new InputModel();
+    private List<PunchCardViewModel> punchCardList = new();
+    private ApplicationUser currentUser;
+    private List<DashBoardViewModel> dashBoardList = new();
+    private int numberOfPunchCards;
+    private int numberOfActivePunchCards;
+    private int numberOfRewardsGiven;
+    private int numberOfRewardsRedeemed;
+    private int totalNumberOfPunches;
+
+    List<ToastMessage> messages = new List<ToastMessage>();
+    [Inject] protected ToastService ToastService { get; set; } = default!;
+
+    private ToastMessage CreateToastMessage(ToastType toastType)
+    => new ToastMessage
+    {
+            Type = toastType,
+            Title = "Stämpling genomförd",
+            HelpText = $"{DateTime.Now}",
+            Message = $"Hej, {currentUser.UserName}! Bra jobbat, stämplingen lyckades. Tidpunkt: {DateTime.Now}",
+    };
+
+    private ToastMessage CreateErrorToastMessage(string errorMessage)
+    {
+
+        return new ToastMessage
+            {
+                Type = ToastType.Warning,
+                Title = "Kunden är ej registrerad.",
+                HelpText = $"{DateTime.Now}",
+                Message = errorMessage,
+            };
+    }
+
+    private ToastMessage WrongNumberOfSymbolErrorToastMessage(string errorMessage)
+    {
+
+        return new ToastMessage
+            {
+                Type = ToastType.Warning,
+                Title = "Fel antal siffror i telefonnumret, vänligen prova igen",
+                HelpText = $"{DateTime.Now}",
+                Message = errorMessage,
+            };
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthenticationState authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        ClaimsPrincipal user = authenticationState.User;
+
+        if ((user.Identity?.IsAuthenticated).GetValueOrDefault(defaultValue: false))
+        {
+            var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (!string.IsNullOrEmpty(userId))
+            {
+                var companyInfo = await (from c in DbContext.Companies
+                                         join a in DbContext.ApplicationUsers on c.FK_ApplicationUserId equals a.Id
+                                         where a.Id == userId
+                                         select c).FirstOrDefaultAsync();
+
+                if (companyInfo != null)
+                {
+                    currentUser = await UserManager.GetUserAsync(user);
+                    currentUser.Company = companyInfo;
+                    numberOfActivePunchCards = await DashBoardRepository.GetNumberOfActivePunchCards(companyInfo.CompanyId);
+                    numberOfPunchCards = await DashBoardRepository.GetTotalNumberOfPunchCards(companyInfo.CompanyId);
+                    numberOfRewardsGiven = await DashBoardRepository.GetNumberOfRewardsGiven(companyInfo.CompanyId);
+                    numberOfRewardsRedeemed = await DashBoardRepository.GetNumberOfRewardsRedeemed(companyInfo.CompanyId);
+                    totalNumberOfPunches = await PunchRepository.GetTotalNumberOfPunches(companyInfo.CompanyId);
+
+
+                    var punchCards = await (from p in DbContext.PunchCards
+                                            where p.FK_CompanyId == companyInfo.CompanyId
+                                            select p).ToListAsync();
+
+                    foreach (var punchCard in punchCards)
+                    {
+                        PunchCardViewModel listitem = new PunchCardViewModel(punchCard.PunchCardId, punchCard.PunchCardName, userId);
+                        punchCardList.Add(listitem);
+                    }
+                }
+
+                var dashboard = await DashBoardController.PopulateDashboard(companyInfo.CompanyId);
+
+                if (dashboard != null)
+                {
+                    foreach (var item in dashboard)
+                    {
+                        DashBoardViewModel listItem = new DashBoardViewModel(item.DateAndTime, item.CustomerName, item.CustomerPhoneNumber, item.TransactionType, item.NumberOfPunches);
+                        dashBoardList.Add(listItem);
+                    }
+                }
+            }
+        }
+    }
+
+    private async Task AddPunch()
+    {
+        try
+        {
+
+            if (!string.IsNullOrWhiteSpace(Input.PhoneNumber) && Input.SelectedPunchCard > 0)
+            {
+
+                if (Input.PhoneNumber.Length != 10)
+                {
+
+                    var errorMessage = "Telefonnumret måste vara exakt 10 siffror.";
+                    var toastMessage = WrongNumberOfSymbolErrorToastMessage(errorMessage);
+                    ToastService.Notify(toastMessage);
+                    return;
+                }
+                await PunchController.AddPunchAsync(Input.PhoneNumber, Input.SelectedPunchCard);
+                ToastService.Notify(CreateToastMessage(ToastType.Success));
+
+                Input.PhoneNumber = "";
+
+                var dashboard = await DashBoardController.PopulateDashboard(currentUser.Company.CompanyId);
+                dashBoardList.Clear();
+
+                numberOfActivePunchCards = await DashBoardRepository.GetNumberOfActivePunchCards(currentUser.Company.CompanyId);
+                numberOfPunchCards = await DashBoardRepository.GetTotalNumberOfPunchCards(currentUser.Company.CompanyId);
+                numberOfRewardsGiven = await DashBoardRepository.GetNumberOfRewardsGiven(currentUser.Company.CompanyId);
+                numberOfRewardsRedeemed = await DashBoardRepository.GetNumberOfRewardsRedeemed(currentUser.Company.CompanyId);
+                totalNumberOfPunches = await PunchRepository.GetTotalNumberOfPunches(currentUser.Company.CompanyId);
+
+                if (dashboard != null)
+                {
+                    foreach (var item in dashboard)
+                    {
+                        DashBoardViewModel listItem = new DashBoardViewModel(item.DateAndTime, item.CustomerName, item.CustomerPhoneNumber, item.TransactionType, item.NumberOfPunches);
+                        dashBoardList.Add(listItem);
+                    }
+                }
+
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            ToastService.Notify(CreateErrorToastMessage(ex.Message));
+        }
+    }
+
+    public class PunchCardViewModel
+    {
+        public PunchCardViewModel(int punchCardid, string punchCardName, string userId)
+        {
+            PunchCardId = punchCardid;
+            PunchCardName = punchCardName;
+            UserId = userId;
+        }
+        public int PunchCardId { get; init; }
+        public string PunchCardName { get; init; }
+        public string UserId { get; init; }
+    }
+
+    public class DashBoardViewModel
+    {
+        public DashBoardViewModel(DateTime dateTime, string customerName, string customerPhoneNumber, string typeOfTransaction, string? numberOfPunches)
+        {
+            CustomerName = customerName;
+            CustomerPhoneNumber = customerPhoneNumber;
+            DateAndTime = dateTime;
+            TransactionType = typeOfTransaction;
+            NumberOfPunches = numberOfPunches;
+        }
+        public string CustomerName { get; set; }
+        public string CustomerPhoneNumber { get; set; }
+        public DateTime DateAndTime { get; set; }
+        public string? NumberOfPunches { get; set; }
+        public int NumberOfRewards { get; set; }
+        public int NumberOfRewardsRedeeemed { get; set; }
+        public string TransactionType { get; set; }
+    }
+
+    private sealed class InputModel
+    {
+        [SupplyParameterFromForm]
+        [Required(ErrorMessage = "Telefonnummer är obligatoriskt")]
+        [Phone(ErrorMessage = "Ogiltigt telefonnummer")]
+        [Display(Name = "Telefonnummer")]
+        public string PhoneNumber { get; set; } = "";
+
+        [SupplyParameterFromForm]
+        [Required(ErrorMessage = "Välj ett stämpelkort")]
+        public int SelectedPunchCard { get; set; }
+    }
+}

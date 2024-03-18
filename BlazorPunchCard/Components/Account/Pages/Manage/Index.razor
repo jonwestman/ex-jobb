@@ -1,0 +1,126 @@
+﻿@page "/Account/Manage"
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Identity
+@using BlazorPunchCard.Data
+
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject IdentityUserAccessor UserAccessor
+@inject IdentityRedirectManager RedirectManager
+
+<AuthorizeView Roles="Admin">
+    <Authorized Context="authContext">
+        <h3>Företagare</h3>
+        <StatusMessage />
+
+        <div class="row">
+            <div class="col-md-6">
+                <EditForm Model="Input" FormName="profile" OnValidSubmit="OnValidSubmitAsync" method="post">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary class="text-danger" role="alert" />
+                    <div class="form-floating mb-3">
+                        <input type="text" value="@username" class="form-control" placeholder="Please choose your username." disabled />
+                        <label for="username" class="form-label">Användare</label>
+                    </div>
+                    @*                     <div class="form-floating mb-3">
+                    <InputText @bind-Value="Input.PhoneNumber" class="form-control" placeholder="Please enter your phone number." />
+                    <label for="phone-number" class="form-label">Telefon Nummer</label>
+                    <ValidationMessage For="() => Input.PhoneNumber" class="text-danger" />
+                    </div> *@
+                    <div class="form-floating mb-3">
+                        <InputDate id="date-of-birth" @bind-Value="Input.DateOfBirth" class="form-control" />
+                        <label for="date-of-birth" class="form-label">Födelsedata</label>
+                        <ValidationMessage For="() => Input.DateOfBirth" class="text-danger" />
+                    </div>
+                    <button type="submit" class="w-100 btn btn-lg btn-primary">Spara</button>
+                </EditForm>
+            </div>
+        </div>
+    </Authorized>
+</AuthorizeView>
+
+
+
+<AuthorizeView Roles="User">
+    <Authorized Context="guestContext">
+        <PageTitle>Användare</PageTitle>
+        <h3>Användare</h3>
+        <StatusMessage />
+
+        <div class="row">
+            <div class="col-md-6">
+                <EditForm Model="Input" FormName="profile" OnValidSubmit="OnValidSubmitAsync" method="post">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary class="text-danger" role="alert" />
+                    <div class="form-floating mb-3">
+                        <input type="text" value="@username" class="form-control" placeholder="Please choose your username." disabled />
+                        <label for="username" class="form-label">Användare</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <InputText @bind-Value="Input.PhoneNumber" class="form-control" placeholder="Please enter your phone number." />
+                        <label for="phone-number" class="form-label">Telefon Nummer</label>
+                        <ValidationMessage For="() => Input.PhoneNumber" class="text-danger" />
+                    </div>
+                    <div class="form-floating mb-3">
+                        <InputDate id="date-of-birth" @bind-Value="Input.DateOfBirth" class="form-control" />
+                        <label for="date-of-birth" class="form-label">Födelsedata</label>
+                        <ValidationMessage For="() => Input.DateOfBirth" class="text-danger" />
+                    </div>
+                    <button type="submit" class="w-100 btn btn-lg btn-primary">Spara</button>
+                </EditForm>
+            </div>
+        </div>
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    private ApplicationUser user = default!;
+    private string? username;
+    private string? phoneNumber;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        user = await UserAccessor.GetRequiredUserAsync(HttpContext);
+        username = await UserManager.GetUserNameAsync(user);
+        phoneNumber = await UserManager.GetPhoneNumberAsync(user);
+
+        Input.PhoneNumber ??= phoneNumber;
+        //TODO: Remove
+        Input.DateOfBirth ??= user.DateOfBirth;
+    }
+
+    private async Task OnValidSubmitAsync()
+    {
+        //TODO: Remove
+        user.PhoneNumber = Input.PhoneNumber;
+        user.DateOfBirth = Input.DateOfBirth;
+        var updateResult = await UserManager.UpdateAsync(user);
+
+            if (!updateResult.Succeeded)
+            {
+                RedirectManager.RedirectToCurrentPageWithStatus("Fel: Misslyckades att uppdatera användaren.", HttpContext);
+            }
+        
+
+        await SignInManager.RefreshSignInAsync(user);
+        RedirectManager.RedirectToCurrentPageWithStatus("Din profil har uppdaterats", HttpContext);
+    }
+
+    private sealed class InputModel
+    {
+        [Phone]
+        [Display(Name = "Telefonnummer")]
+        public string? PhoneNumber { get; set; }
+
+        //TODO: Remove
+
+        public DateOnly? DateOfBirth { get; set; }
+    }
+}

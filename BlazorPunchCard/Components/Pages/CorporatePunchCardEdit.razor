@@ -1,0 +1,148 @@
+﻿@page "/edit/{id:int}"
+@using BlazorPunchCard.Repositories.Interfaces
+@using Shared.Models
+@inject IPunchCardRepository PunchCardRepository
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>
+    Redigera Stämpelkort
+</PageTitle>
+
+@if (PunchCard is not null)
+{
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-6 col-md-12 col-sm-12 mb-4">
+                <Card style="width: 100%;">
+                    <CardBody class="text-center shadow">
+                        <br />
+                        <CardTitle><h2> Redigera Stämpelkort</h2></CardTitle><br />
+                        <CardText>
+                            <EditForm Enhance="true" method="put" OnValidSubmit="EditPunchCard" FormName="EditPunchCardForm" Model="PunchCard" autocomplete="off">
+                                <div class="row mb-2">
+                                    <div class="col-md-4">
+                                        <label for="punchCardName" class="form-label">Namn</label>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <InputText id="punchCardName" @bind-Value="@PunchCard.PunchCardName" class="form-control" aria-required="true" placeholder="Namn" />
+                                        <ValidationMessage For="@(() => PunchCard.PunchCardName)" class="text-danger" />
+                                    </div>
+                                </div>
+
+                                <div class="row mb-2">
+                                    <div class="col-md-4">
+                                        <label for="reward" class="form-label">Erbjudande</label>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <InputText id="reward" @bind-Value="@PunchCard.Reward" class="form-control" aria-required="true" placeholder="Samla 10 stämplar och få 11:e lunchen gratis!" />
+                                        <ValidationMessage For="@(() => PunchCard.Reward)" class="text-danger" />
+                                    </div>
+                                </div>
+
+                                <div class="row mb-2">
+                                    <div class="col-md-4">
+                                        <label for="count" class="form-label">Antal stämplar</label>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <InputNumber id="count" @bind-Value="@PunchCard.PunchCardCount" class="form-control" min="3" max="10" aria-required="true" placeholder="Mellan 3 och 10" />
+                                        <ValidationMessage For="@(() => PunchCard.PunchCardCount)" class="text-danger" />
+                                    </div>
+                                </div>
+
+                                <div class="row mb-2">
+                                    <div class="col-md-4">
+                                        <label for="linkInput1" class="form-label">Sociala medier</label>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <InputText id="linkInput" @bind-Value="@PunchCard.LinkWebsite" class="form-control" placeholder="Länk för hemsida,https://www." />
+                                        <ValidationMessage For="@(() => PunchCard.LinkWebsite)" class="text-danger" />
+                                    </div>
+                                </div>
+
+                                <div class="row mb-2">
+                                    <div class="col-md-4">
+                                        <label for="linkInput2" class="form-label"></label>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <InputText id="linkInput" @bind-Value="@PunchCard.LinkInstagram" class="form-control" placeholder="Länk för Instagram,https://www." />
+                                        <ValidationMessage For="@(() => PunchCard.LinkInstagram)" class="text-danger" />
+                                    </div>
+                                </div>
+
+                                <div class="row mb-2">
+                                    <div class="col-md-4">
+                                        <label for="linkInput3" class="form-label"></label>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <InputText id="linkInput" @bind-Value="@PunchCard.LinkFacebook" class="form-control" placeholder="Länk för Facebook,https://www" />
+                                        <ValidationMessage For="@(() => PunchCard.LinkFacebook)" class="text-danger" />
+                                    </div>
+                                </div>
+
+                                <div class="row mb-2">
+                                    <div class="col-md-4">
+                                        <label for="count" class="form-label">Startdatum</label>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <DateInput TValue="DateOnly" @bind-Value="@PunchCard.DurationStart" class="form-control" aria-required="true" />
+                                        <ValidationMessage For="@(() => PunchCard.DurationStart)" class="text-danger" />
+                                    </div>
+                                </div>
+
+                                <div class="row mb-2">
+                                    <div class="col-md-4">
+                                        <label for="count" class="form-label">Slutdatum</label>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <DateInput TValue="DateOnly" @bind-Value="@PunchCard.DurationEnd" class="form-control" />
+                                        <ValidationMessage For="@(() => PunchCard.DurationEnd)" class="text-danger" />
+                                    </div>
+                                </div>
+                                <div class="row mb-2" hidden>
+                                    <div class="col-md-4">
+                                        <label for="company" class="form-label">Företag</label>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <InputNumber @bind-Value="@PunchCard.FK_CompanyId" />
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-warning">
+                                    Spara
+                                </button>
+                                <a href="/createpunchcard" class="btn btn-secondary shadow-none ms-1">
+                                    Tillbaka
+                                </a>
+                                <div class="row mt-5"></div>
+                                <DataAnnotationsValidator />
+                                <ValidationSummary class="text-danger" role="alert" />
+                            </EditForm>
+                        </CardText>
+                    </CardBody>
+                </Card>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    [SupplyParameterFromForm]
+    public PunchCard? PunchCard { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        PunchCard ??= await PunchCardRepository.GetById(Id);
+    }
+
+    private async Task EditPunchCard()
+    {
+        if (PunchCard is not null)
+        {
+            await PunchCardRepository.Update(PunchCard);
+            Navigation.NavigateTo("/createpunchcard");
+        }
+    }
+}

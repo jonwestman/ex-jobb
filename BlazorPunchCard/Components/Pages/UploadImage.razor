@@ -1,0 +1,313 @@
+﻿@page "/UploadImage"
+
+@using BlazorPunchCard.Data
+@using BlazorPunchCard.Data.Models
+@using BlazorPunchCard.Data.ViewModels
+@using BlazorPunchCard.Repositories
+@using BlazorPunchCard.Repositories.Interfaces
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Identity
+@inject ApplicationDbContext DbContext
+@inject PictureController PictureController
+@inject IPictureRepository pictureRepo
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ILogger<Picture> logger
+@rendermode InteractiveServer
+
+@if (warninngMessage.Length > 0)
+{
+	<div class="alert alert-warning">
+		<strong>Varning!</strong> @warninngMessage.
+	</div>
+}
+<div class="row justify-content-center">
+	<div class="col-lg-6 col-md-12 col-sm-12 mb-4">
+		<Card style="width: 100%;">
+			<CardBody class="text-center shadow">
+				<br />
+				<CardTitle><h2> Ladda upp din företagslogga här</h2></CardTitle><br />
+				<CardText>
+					<div class="container">
+						<div class="row">
+							<div class="col-md-6 mb-3">
+								<label>
+									<InputFile class="form-control" disabled="@fileLoading" OnChange="@OnInputFileChange" single />
+								</label>
+								@if (fileLoading)
+								{
+									<i class="fa fa-refresh"></i> <span>Laddar...</span>
+								}
+							</div>
+							<div class="col-sm-6 mb-3">
+								<button type="button" disabled="@fileLoading" class="btn btn-warning" @onclick="OnUploadSubmit">
+									Ladda upp bild
+								</button>
+							</div>
+						</div>
+						@if (displayMessage.Length > 0)
+						{
+							<div class="alert alert-success">
+								<strong>Succé!</strong> @displayMessage.
+							</div>
+						}
+						<div class="col-md-12">
+							<div class="row">
+								@if (pictureList.Count > 0)
+								{
+									<table class="table table-bordered table-responsive">
+										<thead class="text-dark">
+											<tr>
+												<th>Din valda bild</th>
+											</tr>
+										</thead>
+										<tbody>
+											@foreach (var attachment in pictureList)
+											{
+												<tr>
+													<td>
+														<a class="text-dark"><i class="fa-solid fa-paperclip"></i> @attachment.FileName</a>&nbsp;
+														<button class="btn btn-danger" @onclick="() => OnFileDeleteClick(attachment)">Radera</button>
+														<img src="@uploadedPicture.FileStorageUrl" class="img-fluid" alt=\"Uppladdad bild\">";
+													</td>
+												</tr>
+											}
+										</tbody>
+									</table>
+								}
+								else
+								{
+									<div class="alert alert-dark 7">
+										<strong>Ingen fil vald</strong>
+									</div>
+								}
+							</div>
+						</div>
+					</div>
+				</CardText>
+				@if (userPictursList.Any())
+				{
+					<Card style="width: 100%;">
+						<CardBody class="text-center shadow">
+							<CardTitle><h2>Dina bilder</h2></CardTitle>
+							<CardText>
+								<div class="container">
+									<div class="row">
+										@foreach (var picture in userPictursList)
+										{
+											<div class="col-md-4 mb-3">
+												<img src="@picture.FileStorageUrl" alt="@picture.FileName" class="img-fluid" />
+												<div class="mt-2">
+													<button class="btn btn-danger" @onclick="() => OnDeleteUserPictureClick(picture)">Radera</button>
+												</div>
+											</div>
+										}
+									</div>
+								</div>
+							</CardText>
+						</CardBody>
+					</Card>
+				}
+			</CardBody>
+		</Card>
+	</div>
+</div>
+
+
+
+@code {
+	private string warninngMessage = "";
+	private string displayMessage = "";
+	private List<IBrowserFile> loadedFiles = new();
+	private long maxFileSize = 1024 * 1024 * 3; //bites, kilobites, megabites = 3MB
+	private int maxAllowedFiles = 1;
+	private bool fileLoading;
+	string Message = "Ingen fil är vald";
+	IReadOnlyList<IBrowserFile> selectedFiles;
+	private List<Picture> pictureList = new();
+	private List<PictureViewModel> userPictursList = new();
+	private ApplicationUser currentUser;
+	private Picture? uploadedPicture;
+	private string userId;
+
+
+	protected override async Task OnInitializedAsync()
+	{
+		AuthenticationState authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+		ClaimsPrincipal user = authenticationState.User;
+
+		if ((user.Identity?.IsAuthenticated).GetValueOrDefault(defaultValue: false))
+		{
+			userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+
+
+			if (!string.IsNullOrEmpty(userId))
+			{
+				var items = await (from p in DbContext.Pictures
+											join a in DbContext.ApplicationUsers on p.FK_ApplicationUserId equals a.Id
+											where a.Id == userId
+											select new
+											{
+												FileName = p.FileName,
+												FileStorageUrl = p.FileStorageUrl,
+												ContentType = p.ContentType,
+												UserId = a.Id,
+												PictureId = p.PictureId
+											}).ToListAsync();
+
+
+				foreach (var item in items)
+				{
+					PictureViewModel listitem = new PictureViewModel(item.FileName, item.FileStorageUrl, item.ContentType, item.UserId, item.PictureId);
+					userPictursList.Add(listitem);
+				}
+			}
+		}
+	}
+
+
+	private void OnInputFileChange(InputFileChangeEventArgs e)
+	{
+		selectedFiles = e.GetMultipleFiles();
+		Message = $"{selectedFiles.Count} filer valda";
+		this.StateHasChanged();
+	}
+
+	private async void OnUploadSubmit()
+	{
+		if (selectedFiles == null || selectedFiles.Count == 0) 
+		{
+			warninngMessage = "Vänligen välj en bild innan du laddar upp";
+			return;
+		}
+
+		if (pictureList.Count > 0)
+		{
+			warninngMessage = "Du har redan en bild. Vänligen radera den först innan du laddar upp en ny";
+			return;
+		}
+
+		if (userPictursList.Any())
+		{
+			warninngMessage = "Du har redan en bild. Vänligen radera den först innan du laddar upp en ny";
+			return;
+		}
+		else
+		{
+			fileLoading = true;
+			foreach (var file in selectedFiles)
+			{
+				try
+				{
+					var trustedFileNameForFileStorage = file.Name;
+
+					var user = (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User;
+					var principal = new ClaimsPrincipal(user);
+
+					var currentUser = await UserManager.GetUserAsync(principal);
+					var userId = currentUser.Id;
+
+					var blobUrl = await pictureRepo.UploadPictureFileAsync(trustedFileNameForFileStorage, file.ContentType, file.OpenReadStream(20971520));
+					if (blobUrl != null)
+					{
+						Picture fileUploadViewModel = new Picture()
+							{
+								FileName = trustedFileNameForFileStorage,
+								FileStorageUrl = blobUrl,
+								ContentType = file.ContentType,
+							};
+
+						pictureList.Add(fileUploadViewModel);
+						displayMessage = trustedFileNameForFileStorage + "är nu uppladdad";
+						await SavePictureAsync(userId, trustedFileNameForFileStorage, blobUrl);
+					}
+					else
+						warninngMessage = "Det gick inte att ladda upp en fil, vänligen försök igen";
+				}
+				catch (Exception ex)
+				{
+					warninngMessage = "Det gick inte att ladda upp en fil, vänligen försök igen";
+				}
+			}
+
+			fileLoading = false;
+			this.StateHasChanged();
+		}
+	}
+
+
+	public async Task SavePictureAsync(string userId, string fileName, string blobUrl)
+	{
+		var picture = new Picture
+			{
+				FileName = fileName,
+				FileStorageUrl = blobUrl,
+				FK_ApplicationUserId = userId
+			};
+
+		DbContext.Pictures.Add(picture);
+		await DbContext.SaveChangesAsync();
+
+		uploadedPicture = picture;
+	}
+
+	private async Task OnDeleteUserPictureClick(PictureViewModel picture)
+	{
+		try
+		{
+			userPictursList.Remove(picture);
+			await DeletePictureAsync(picture.PictureId);
+			displayMessage = $"Bilden \"{picture.FileName}\" är nu raderad";
+		}
+		catch (Exception)
+		{
+			warninngMessage = "Någonting gick fel, vänligen försök igen";
+		}
+		this.StateHasChanged();
+	}
+
+	private async void OnFileDeleteClick(Picture attachment)
+	{
+		try
+		{
+			var deleteResponse = await pictureRepo.DeletePictureFileAsync(attachment.FileName);
+
+			if (deleteResponse)
+			{
+				pictureList.Remove(attachment);
+				displayMessage = attachment.FileName + " är nu RADERAD";
+				await pictureRepo.DeleteByIdAsync(attachment.PictureId);
+			}
+		}
+		catch (Exception)
+		{
+			warninngMessage = "Någonting gick fel, vänligen försök igen";
+		}
+		await DeletePictureAsync(uploadedPicture.PictureId);
+		this.StateHasChanged();
+	}
+
+
+	public async Task DeletePictureAsync(int pictureId)
+	{
+		await pictureRepo.DeleteByIdAsync(pictureId);
+	}
+
+	public class PictureViewModel
+	{
+		public PictureViewModel(string fileName, string fileStorageUrl, string contentType, string userId, int pictureId)
+		{
+			FileName = fileName;
+			FileStorageUrl = fileStorageUrl;
+			ContentType = contentType;
+			UserId = userId;
+			PictureId = pictureId;
+		}
+		public string FileName { get; init; }
+		public string FileStorageUrl { get; init; }
+		public string ContentType { get; init; }
+		public string UserId { get; set; }
+		public int PictureId { get; set; }
+	}
+}

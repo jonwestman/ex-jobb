@@ -1,0 +1,160 @@
+﻿@page "/punchcardviewcustomer"
+@using BlazorPunchCard.Data
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using Shared.Models
+@using BlazorPunchCard.Components.Pages
+@using System.Diagnostics
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@using System.Text
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@inject HttpClient Http
+@inject ApplicationDbContext DbContext
+
+<h1>Mina stämpelkort</h1>
+<br />
+<link href="css/app.css" rel="stylesheet" />
+
+    <div class="row">
+        @foreach (var punchCard in userpunchCardList)
+        {
+            <div class="col-md-4 mb-4">
+                <div class="stamp-card h-100 d-flex flex-column">
+                    <div class="stamp-card-header text-center" style="background-color:black; color:white; position: relative;">
+                        @if (!string.IsNullOrEmpty(punchCard.CompanyPictureUrl))
+                        {
+                            <img src="@punchCard.CompanyPictureUrl" class="company-picture" style="padding-top: 0.3rem; padding-left: 0.3rem; padding-right: 0.3rem; padding-bottom: 0.3rem;" />
+                        }
+                        <h5>@punchCard.PunchCardName</h5>
+                        <h9>@punchCard.Reward</h9>
+                    </div>
+                    <div class="stamp-card-body d-flex flex-column justify-content-center">
+                        <div class="text-center">
+                            <h3 style="font-size: 30px;">@ConvertToRings(punchCard.PunchId, punchCard.PunchCardCount - punchCard.PunchId)</h3>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                            @if (!string.IsNullOrWhiteSpace(punchCard.LinkFacebook))
+                            {
+                                <a href="@punchCard.LinkFacebook" target="_blank" class="social-link ms-3 me-3">
+                                    <i class="bi bi-facebook" style="font-size: 30px;"></i>
+                                </a>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(punchCard.LinkInstagram))
+                            {
+                                <a href="@punchCard.LinkInstagram" target="_blank" class="social-link ms-3 me-3">
+                                    <i class="bi bi-instagram" style="font-size: 30px;"></i>
+                                </a>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(punchCard.LinkWebsite))
+                            {
+                                <a href="@punchCard.LinkWebsite" target="_blank" class="social-link ms-3 me-3">
+                                    <i class="bi bi-house" style="font-size: 30px;"></i>
+                                </a>
+                            }
+                            </div>
+                            <div class="d-flex align-items-center" style="margin-right: 10px;">
+                            <p class="card-text small" style="font-size: 0.8em; padding-right: 0.2rem;">Giltighetstid: @punchCard.DurationEnd.ToString("yyyy-MM-dd")</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+
+@code {
+    private List<UserPunchCardViewModel> userpunchCardList;
+    private string? companyPicture;
+
+    protected override async Task OnInitializedAsync()
+    {
+        userpunchCardList = new List<UserPunchCardViewModel>();
+        var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authenticationState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (!string.IsNullOrEmpty(userId))
+            {
+                // Gets stamp cards
+                var userPunchCards = await DbContext.UserPunchCards
+                    .Where(upc => upc.FK_ApplicationUserId == userId && upc.IsActive)
+                    .Include(upc => upc.PunchCards)
+                    .ToListAsync();
+
+                // Gets stamps
+                foreach (var upc in userPunchCards)
+                {
+                    // Gets company picture
+                    var companyPicture = await (from p in DbContext.Pictures
+                                                join u in DbContext.ApplicationUsers on p.FK_ApplicationUserId equals u.Id
+                                                join c in DbContext.Companies on u.Id equals c.FK_ApplicationUserId
+                                                join pc in DbContext.PunchCards on c.CompanyId equals pc.FK_CompanyId
+                                                join up in DbContext.UserPunchCards on pc.PunchCardId equals up.FK_PunchCardId
+                                                where pc.FK_CompanyId == c.CompanyId && upc.FK_PunchCardId == up.FK_PunchCardId
+                                                select p.FileStorageUrl).FirstOrDefaultAsync();
+
+                    var punchCount = await DbContext.Punches
+                        .CountAsync(p => p.FK_UserPunchCard == upc.UserPunchCardId);
+
+                    var viewModel = new UserPunchCardViewModel
+                        {
+                            PunchCardName = upc.PunchCards.PunchCardName,
+                            PunchCardCount = upc.PunchCards.PunchCardCount,
+                            Reward = upc.PunchCards.Reward,
+                            DurationEnd = upc.PunchCards.DurationEnd,
+                            PunchId = punchCount,
+                            LinkFacebook = upc.PunchCards.LinkFacebook,
+                            LinkInstagram = upc.PunchCards.LinkInstagram,
+                            LinkWebsite = upc.PunchCards.LinkWebsite,
+                            CompanyPictureUrl = companyPicture
+                        };
+
+                    userpunchCardList.Add(viewModel);
+                }
+            }
+        }
+    }
+
+    public MarkupString ConvertToRings(int filledCount, int unfilledCount)
+    {
+        StringBuilder rings = new StringBuilder();
+
+        // Add filled stamps with Bootstrap icons
+        for (int i = 0; i < filledCount; i++)
+        {
+            rings.Append("<i class=\"bi bi-circle-fill\"></i> "); // Lägg till ett mellanslag efter varje fylld cirkel
+        }
+
+        // Add unfilled stamps with Bootstrap icons
+        for (int i = 0; i < unfilledCount; i++)
+        {
+            rings.Append("<i class=\"bi bi-circle\"></i> "); // Add a space after each unfilled circle
+        }
+
+        return (MarkupString)rings.ToString();
+    }
+
+    public class UserPunchCardViewModel()
+    {
+        public string PunchCardName { get; set; }
+        public int PunchCardCount { get; set; }
+        public string Reward { get; set; }
+        public int UserPunchCardId { get; set; }
+        public int PunchId { get; set; }
+        public string UserId { get; set; }
+        public string CompanyName { get; set; }
+        public DateOnly DurationEnd { get; set; }
+        public string? LinkFacebook { get; set; }
+        public string? LinkInstagram { get; set; }
+        public string? LinkWebsite { get; set; }
+        public string? CompanyPictureUrl { get; set; }
+    }
+}

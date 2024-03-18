@@ -1,0 +1,42 @@
+﻿@page "/testtest"
+@using System.Net.Mail
+@using System.Threading.Tasks
+@using System.Net
+@rendermode InteractiveServer
+ 
+<h3>Testtest</h3>
+ 
+<Button class="btn btn-primary" @onclick="SendMailAsync">Send Mail</Button>
+<br />
+ 
+<span>@Message</span>
+ 
+@code {
+    private string Message { get; set; } = "";
+ 
+    private void SendMailAsync()
+    {
+        try
+        {
+            using (MailMessage mail = new MailMessage())
+            {
+                mail.From = new MailAddress("xstampdev@gmail.com");
+                mail.To.Add("blom-andreas@outlook.com");
+                mail.Subject = "Test as Hell";
+                mail.Body = "<h1>This is the mail Body</h1>";
+                mail.IsBodyHtml = true;
+ 
+                using(SmtpClient smtp = new SmtpClient("smtp.gmail.com", 587))
+    {
+                    smtp.Credentials = new NetworkCredential("xstampdev@gmail.com", "ytaweqixsnfigssy");
+                    smtp.EnableSsl = true;
+                    smtp.Send(mail);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Message = $"Fel: {ex.Message}\n{ex.StackTrace}";
+        }
+    }
+}

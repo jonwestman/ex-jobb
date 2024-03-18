@@ -1,0 +1,308 @@
+﻿@using BlazorBootstrap
+@using Microsoft.AspNetCore.Components.Authorization
+
+@implements IDisposable
+@inherits LayoutComponentBase
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<div class="page">
+	<AuthorizeView Roles="Admin">
+		<Authorized>
+			<div class="sidebar">
+				<NavMenu />
+			</div>
+		</Authorized>
+	</AuthorizeView>
+
+
+	<main>
+		<div class="top-row">
+			<div class="logo-container">
+				@if (authenticationState != null && authenticationState.User.Identity.IsAuthenticated)
+				{
+					if (IsUserAuthenticatedAndInRole("Admin"))
+					{
+						<a class="navbar-brand" href="/corporateOverview">
+							<img src="/images/xstamp-WHITE.svg" alt="Logo" class="logo-image">
+						</a>
+					}
+					else
+					{
+						<a class="navbar-brand" href="/CustomerHome">
+							<img src="/images/xstamp-WHITE.svg" alt="Logo" class="logo-image">
+						</a>
+					}
+				}
+				else
+				{
+					<a class="navbar-brand" href="/">
+						<img src="/images/xstamp-WHITE.svg" alt="Logo" class="logo-image">
+					</a>
+				}
+			</div>
+
+
+			<!-- Registration and login in the main navigation -->
+			<div class="menu-items">
+				<AuthorizeView>
+					<Authorized>
+						<NavLink class="nav-link-private" href="Account/Manage">
+							<span aria-hidden="true"></span> @context.User.Identity?.Name
+						</NavLink>
+					</Authorized>
+					<NotAuthorized>
+						@* <NavLink class="nav-link-private" href="Account/Register">
+						<span aria-hidden="true"></span> Registrera &nbsp;
+						<i style="font-size: 1.2rem"><Icon Name="IconName.PlusCircle" /></i>
+						</NavLink> *@
+						<NavLink class="nav-link-private" href="Account/Login">
+							<span aria-hidden="true"></span> Logga in &nbsp;
+							<i style="font-size: 1.2rem"><Icon Name="IconName.PersonCircle" /></i>
+						</NavLink>
+					</NotAuthorized>
+				</AuthorizeView>
+			</div>
+
+			<div class="dropdown">
+				<span class="dropdown-toggle custom-dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="true">
+					<Icon Name="IconName.List" />
+				</span>
+				<ul class="dropdown-menu dropdown-menu-custom">
+					<!-- Displayed for all customers before logged in -->
+					<AuthorizeView>
+						<NotAuthorized>
+							<li><a class="dropdown-item" href="contactInfo">Kontakt</a></li>
+							<li><a class="dropdown-item" href="pricingInfo">Priser</a></li>
+							<li><a class="dropdown-item" href="aboutUs">Om oss</a></li>
+							<li role="separator" class="dropdown-divider"></li>
+							<li><a class="dropdown-item" href="Account/RegisterCompany">Registrera företag</a></li>
+							<li><a class="dropdown-item" href="Account/Register">Registrera privatkund</a></li>
+							<li role="separator" class="dropdown-divider"></li>
+							<li><a class="dropdown-item" href="Account/Login">Logga in</a></li>
+						</NotAuthorized>
+					</AuthorizeView>
+
+					<!-- Displayed only when logged in as a private customer -->
+					<AuthorizeView Roles="User">
+						<Authorized>
+							<li><a class="dropdown-item" href="punchcardviewcustomer">Mina stämpelkort</a></li>
+							<li><a class="dropdown-item" href="rewardpage">Mina belöningar</a></li>
+							<li><a class="dropdown-item" href="showallstampcards">Alla stämpelkort</a></li>
+
+
+
+							<li role="separator" class="dropdown-divider"></li>
+							<li>
+								<NavLink class="dropdown-item" href="Account/Manage">
+									<span aria-hidden="true"></span> Hantera konto
+								</NavLink>
+							</li>
+							<li>
+								<form action="Account/Logout" method="post">
+									<AntiforgeryToken />
+									<input type="hidden" name="ReturnUrl" href="/" />
+									<button type="submit" class="dropdown-item">
+										Logga ut
+									</button>
+								</form>
+							</li>
+						</Authorized>
+					</AuthorizeView>
+
+					<!-- Displayed only when logged in as a company -->
+					<AuthorizeView Roles="Admin">
+						<Authorized>
+							<li><a class="dropdown-item" href="corporateOverview">Stämpla</a></li>
+							<li><a class="dropdown-item" href="redemptionCode">Lös in gåva</a></li>
+							<li><a class="dropdown-item" href="createPunchCard">Hantera Kort</a></li>
+							<li><a class="dropdown-item" href="punchCardView">Våra stämpelkort</a></li>
+							<li role="separator" class="dropdown-divider"></li>
+							<li>
+								<NavLink class="dropdown-item" href="Account/Manage">
+									<span aria-hidden="true"></span> Hantera konto
+								</NavLink>
+							</li>
+							<li>
+								<form action="Account/Logout" method="post">
+									<AntiforgeryToken />
+									<input type="hidden" name="ReturnUrl" href="/" />
+									<button type="submit" class="dropdown-item">
+										Logga ut
+									</button>
+								</form>
+							</li>
+						</Authorized>
+					</AuthorizeView>
+				</ul>
+			</div>
+		</div>
+
+
+		<!-- Navbar 2 - blue for all users -->
+		<AuthorizeView>
+			<NotAuthorized>
+				<div class="top-row-second">
+					<a href="contactInfo">
+						Kontakt &nbsp;
+						<i style="font-size: 1.2rem"><Icon Name="IconName.Whatsapp" /></i>
+					</a>
+					<a href="pricingInfo">
+						Priser &nbsp;
+						<i style="font-size: 1.2rem"><Icon Name="IconName.Coin" /></i>
+					</a>
+					<a href="aboutUs">
+						Om oss &nbsp;
+						<i style="font-size: 1.2rem"><Icon Name="IconName.InfoCircle" /></i>
+					</a>
+				</div>
+			</NotAuthorized>
+		</AuthorizeView>
+
+		<!-- Navbar 2 - blue for private users when logged in -->
+		<AuthorizeView Roles="User">
+			<Authorized>
+				<div class="top-row-second">
+					<a href="punchcardviewcustomer">
+						Mina Stämpelkort &nbsp;
+						@* 						<i style="font-size: 1.2rem"><Icon Name="IconName.CardList" /></i>
+						*@
+					</a>
+					<a href="rewardpage">
+						Mina Belöningar &nbsp;
+						@* 	<i style="font-size: 1.2rem"><Icon Name="IconName.Award" /></i> *@
+					</a>
+					<a href="showallstampcards">
+						Alla Stämpelkort &nbsp;
+					</a>
+				</div>
+			</Authorized>
+		</AuthorizeView>
+
+		<!--  Navbar bottom - for private customer mobil -->
+		<AuthorizeView Roles="User">
+			<Authorized>
+				<div class="navbar customer-navbar navbar-expand-customer fixed-bottom-customer">
+					<ul class="navbar-nav-customer mx-auto d-flex justify-content-center align-items-center">
+						<li class="nav-item-customer">
+							<NavLink class="nav-link-customer" href="Account/Manage">
+								<div class="nav-icon-customer"><Icon Name="IconName.People" /></div>
+							</NavLink>
+							<p class="navbarText-customer">Konto</p>
+						</li>
+						<li class="nav-item-customer">
+							<NavLink class="nav-link-customer" href="rewardPage">
+								<div class="nav-icon-customer"><Icon Name="IconName.Award" /></div>
+							</NavLink>
+							<p class="navbarText-customer">Gåva</p>
+						</li>
+						<li class="nav-item-customer">
+							<NavLink class="nav-link-customer" href="punchcardviewcustomer">
+								<div class="nav-icon-customer"><Icon Name="IconName.CardList" /></div>
+							</NavLink>
+							<p class="navbarText-customer">Kort</p>
+						</li>
+					</ul>
+				</div>
+			</Authorized>
+		</AuthorizeView>
+
+
+		<article class="content px-4">
+			@Body
+		</article>
+	</main>
+</div>
+
+
+<div id="blazor-error-ui">
+	An unhandled error has occurred.
+	<a href="" class="reload">Reload</a>
+	<a class="dismiss">🗙</a>
+</div>
+
+<!-- Styling for dropdown menu -->
+<style>
+	.btn-custom {
+		border: 1px solid #994400;
+		background-color: #FBBA00;
+		color: black;
+	}
+
+		.btn-custom:hover {
+			background-color: #FBBA00;
+			border: 1.5px solid #ffffff;
+		}
+
+		.btn-custom:active,
+		.btn-custom:focus {
+			background-color: #FBBA00;
+			border: 1px solid #994400;
+		}
+
+	.dropdown-item {
+		color: white;
+	}
+
+
+		.dropdown-item:hover {
+			background-color: #FBBA00;
+			color: black;
+			border-radius: 5px;
+		}
+
+		.dropdown-item.active {
+			background-color: white;
+			color: black;
+			border: 1px solid black;
+			border-radius: 5px;
+		}
+
+	.dropdown-menu-custom a:hover {
+		background-color: #FBBA00;
+		color: black;
+	}
+
+	.custom-dropdown-toggle {
+		color: #FBBA00;
+		font-size: xx-large;
+		cursor: pointer;
+		position: relative;
+	}
+
+		.custom-dropdown-toggle::after {
+			content: none; /* Dölj pilen */
+		}
+</style>
+
+@code {
+	private string? currentUrl;
+	private AuthenticationState authenticationState;
+
+	protected override async Task OnInitializedAsync()
+	{
+		authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+	}
+
+	protected override void OnInitialized()
+	{
+		currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+		NavigationManager.LocationChanged += OnLocationChanged;
+	}
+
+	private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+	{
+		currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
+		StateHasChanged();
+	}
+
+	public void Dispose()
+	{
+		NavigationManager.LocationChanged -= OnLocationChanged;
+	}
+
+	private bool IsUserAuthenticatedAndInRole(string role)
+	{
+		return authenticationState.User.Identity.IsAuthenticated && authenticationState.User.IsInRole(role);
+	}
+}

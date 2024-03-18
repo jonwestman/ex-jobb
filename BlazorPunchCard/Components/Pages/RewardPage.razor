@@ -1,0 +1,155 @@
+﻿@page "/rewardpage"
+@using BlazorPunchCard.Data
+@using BlazorPunchCard.Data.Models
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using Shared.Models
+@using BlazorPunchCard.Components.Pages
+@using System.Diagnostics
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@inject HttpClient Http
+@inject ApplicationDbContext DbContext
+
+<h1>Mina belöningar</h1>
+<br />
+
+<style >
+
+    .card {
+        border: 2px solid #1C1B1F;
+        border-radius: 8px;
+        background-color: #DBFEF8;
+        color: black;
+        margin-bottom: 15px;
+        font-family: sans-serif;
+        background: linear-gradient(to right, #ffffe1, #FFD700); /* Guldgradient */
+    }
+
+    .card:hover {
+        box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.3);
+        transform: scale(1.05);
+        transition: all 0.3s ease-in-out;
+    }
+
+    .card-header {
+        text-align: center; /* Centrera texten horisontellt */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-family: sans-serif;
+        font-weight: normal; /* Ta bort fetstil */
+        height: 100%; /* Fyll höjden vertikalt */
+        flex-direction: column; /* Ställ in flexriktningen till kolumn */
+    }
+
+    .card-body {
+        display: flex;
+        justify-content: space-between;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 5px;
+    }
+
+    .text-end {
+        text-align: end; /* Justera texten till höger */
+        margin-right: 10px;
+    }
+
+    .small {
+        font-size: 0.6em; /* Justera textstorleken */
+    }
+
+    .container {
+    }
+</style>
+
+<div class="row">
+    @if (rewardViewModels.Any())
+    {
+        @foreach (var rewVm in rewardViewModels)
+        {
+            <div class="col-md-3 mb-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>@rewVm.CompanyName</h3>
+                        <h3>@rewVm.PunchCardName</h3>
+                        <h6>@rewVm.TypeOfReward</h6>
+                    </div>
+                    <div class="card-body" style="text-align: center;">
+                        <strong><p class="card-text">Engångskod: @rewVm.RedemptionCode</p></strong>
+                        <p class="card-text">Grattis du har fått en belöning. Ange din engångskod i kassan.</p>
+                    </div>
+                    <div class="text-end">
+                        <p class="card-text small" style="font-size: 0.8em;">Giltighetstid: @rewVm.DurationEnd</p>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div>
+            <h5><strong>Här kommer du kunna se dina belöningar när du fyllt kort med stämplar.</strong></h5>
+            <h5>Du löser in din belöning genom att ange koden i kassan eller så kan du välja att ge bort din kod till någon annan. </h5>
+        </div>
+    }
+</div>
+
+@code {
+    private List<RewardViewModel> rewardViewModels = new List<RewardViewModel>();
+    private ApplicationUser? currentUser;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        currentUser = await UserManager.GetUserAsync(authState.User);
+
+        if (currentUser != null)
+        {
+            var userPunchCards = await DbContext.UserPunchCards
+                .Where(upc => upc.FK_ApplicationUserId == currentUser.Id)
+                .Include(upc => upc.PunchCards)
+                .ThenInclude(pc => pc.Companies)
+                .ToListAsync();
+
+            var userRewards = await DbContext.Rewards
+                .Where(r => userPunchCards.Select(upc => upc.UserPunchCardId).Contains(r.FK_UserPunchCardId) && r.IsActive)
+                .ToListAsync();
+
+            rewardViewModels = userRewards.Select(r => new RewardViewModel
+                {
+                    RewardId = r.RewardId,
+                    TypeOfReward = r.TypeOfReward,
+                    CompanyName = r.UserPunchCards.PunchCards.Companies.CompanyName,
+                    PunchCardName = r.UserPunchCards.PunchCards.PunchCardName,
+                    UserName = currentUser.UserName,
+                    RedemptionCode = r.RedemptionCode,
+                    DurationEnd = r.UserPunchCards.PunchCards.DurationEnd
+                }).ToList();
+        }
+    }
+
+    public class RewardViewModel
+    {
+        public int RewardId { get; set; }
+        public string? TypeOfReward { get; set; }
+        public string? CompanyName { get; set; }
+        public string? PunchCardName { get; set; }
+        public string? UserName { get; set; }
+        public int RedemptionCode { get; set; }
+        public DateOnly DurationEnd { get; set; }
+    }
+}
+
+
+
+
+
+
+
+
+

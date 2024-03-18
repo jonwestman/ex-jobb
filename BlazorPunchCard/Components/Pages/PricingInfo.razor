@@ -1,0 +1,66 @@
+﻿@page "/pricingInfo"
+
+<PageTitle>Pricing</PageTitle>
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header text-center">
+                    <h5 class="card-title">Basic Level för företag</h5>
+                </div>
+                <div class="card-body text-start d-flex justify-content-center align-items-center flex-column">
+                    <p>
+                        Vår Basic-nivå för företagskunder är perfekt för mindre företag som vill belöna sina lojala kunder utan att investera för mycket tid eller resurser. Med denna nivå får du tillgång till följande fördelar:
+                    </p>
+                    <ul class="mb-3">
+                        <li><strong>Stämpelkort för belöningar:</strong><br /> Tilldela upp till två stämpelkort åt dina kunder för varje köp, vilket ökar kundlojaliteten och uppmuntrar till återkommande affärer.</li><br />
+                        <li><strong>Begränsad statistik:</strong><br /> Få en grundläggande översikt över dina kunders köpmönster och vanor för att göra informerade beslut, med tillgång till enkel dataanalys.</li><br />
+                        <li><strong>Enkel användning:</strong><br /> En intuitiv plattform som är lätt att komma igång med, perfekt för mindre företag utan avancerade tekniska kunskaper.</li><br />
+                    </ul>
+                    <p>
+                        Kom igång med vår Basic-nivå idag för att börja belöna dina kunder och bygga långsiktiga relationer som driver tillväxten för ditt företag!
+                    </p><br />
+                    <BlazorBootstrap.Button Class="custom-button m-1" To="Account/RegisterCompany" Type="BlazorBootstrap.ButtonType.Link">Registrera ditt företag här</BlazorBootstrap.Button>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header text-center">
+                    <h5 class="card-title">Premium Level för företag</h5>
+                </div>
+                <div class="card-body text-start d-flex justify-content-center align-items-center flex-column">
+                    <p>
+                        För företag som strävar efter att ta sin kundlojalitet till nästa nivå erbjuder vår Premium-nivå en mer omfattande uppsättning av funktioner och fördelar:
+                    </p>
+                    <ul class="mb-3">
+                        <li><strong>Avancerad statistik och analys:</strong><br /> Få djupgående insikter i dina kunders beteenden och preferenser med detaljerad dataanalys och rapportering.</li><br />
+                        <li><strong>Anpassningsmöjligheter:</strong><br /> Skräddarsy och anpassa stämpelkorten och lojalitetsprogrammen efter dina specifika affärsbehov och varumärkesidentitet.</li><br />
+                        <li><strong>Prioriterad kundsupport:</strong><br /> Få snabb och personlig support från vårt team för att säkerställa en smidig implementering och användarupplevelse.</li><br />
+                        <li><strong>Exklusiva erbjudanden och kampanjer:</strong><br /> Ta del av specialerbjudanden och rabatter för att belöna dina mest värdefulla kunder och driva ökad försäljning.</li>
+                    </ul>
+                    <p>
+                        Uppgradera ditt företag till vår Premium-nivå idag för att maximera din kundlojalitet och öka din konkurrenskraft på marknaden!
+                        <br><br>
+                        För mer info ring: 060-112233 eller <a href="mailto:info@xstamp.com">Maila oss</a>.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .custom-button {
+        background-color: #31525B;
+        color: #FFFFFF;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+        .custom-button:hover {
+            background-color: #FBBA00;
+            color: black;
+            box-shadow: 1rem 1rem 2rem rgba(0, 0, 0, 0.1);
+        }
+</style>

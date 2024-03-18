@@ -1,0 +1,78 @@
+﻿@using BlazorBootstrap
+@implements IDisposable
+
+@inject NavigationManager NavigationManager
+<title>XSTAMP</title>
+@* navbar for big screens *@
+<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+    <nav class="flex-row">
+        <div class="nav-item">
+            <NavLink class="nav-link" href="corporateOverview" Match="NavLinkMatch.All">
+                <div class="nav-icon" title="Stämpla"><Icon Name="IconName.House" /></div>
+                <p class="navbarText">Stämpla</p>
+            </NavLink>
+        </div>
+
+        <div class="nav-item">
+            <NavLink class="nav-link" href="redemptionCode">
+                <div class="nav-icon" title="Lös In Gåva"><Icon Name="IconName.Award" /></div>
+                <p class="navbarText">Lös In Gåva</p>
+            </NavLink>
+        </div>
+
+        <div class="nav-item">
+            <NavLink class="nav-link" href="createpunchcard">
+                <div class="nav-icon" title="Hantera Kort"><Icon Name="IconName.Pencil" /></div>
+                <p class="navbarText">Hantera Kort</p>
+            </NavLink>
+        </div>
+    </nav>
+</div>
+
+@* navbar for small screens *@
+<div class="navbar navbar-expand fixed-bottom">
+    <ul class="navbar-nav mx-auto d-flex justify-content-between align-items-center">
+        <li class="nav-item">
+            <NavLink class="nav-link" href="corporateOverview" Match="NavLinkMatch.All">
+                <div class="nav-icon"><Icon Name="IconName.House" /></div>
+            </NavLink>
+            <p class="navbarText">Stämpla</p>
+        </li>
+        <li class="nav-item">
+            <NavLink class="nav-link" href="redemptionCode">
+                <div class="nav-icon"><Icon Name="IconName.Award" /></div>
+            </NavLink>
+            <p class="navbarText">Gåva</p>
+        </li>
+       
+        <li class="nav-item">
+            <NavLink class="nav-link" href="createpunchcard">
+                <div class="nav-icon"><Icon Name="IconName.Pencil" /></div>
+            </NavLink>
+            <p class="navbarText">Hantera Kort</p>
+        </li>
+    </ul>
+</div>
+
+
+@code {
+    private string? currentUrl;
+
+    protected override void OnInitialized()
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+}
+

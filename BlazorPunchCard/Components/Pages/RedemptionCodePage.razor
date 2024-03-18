@@ -1,0 +1,109 @@
+﻿@page "/redemptionCode"
+@using BlazorPunchCard.Repositories.Interfaces
+@inject RewardController RewardController
+@inject IRewardRepository RewardRepository
+@rendermode InteractiveServer
+
+<Toasts class="p-3" AutoHide="true" Delay="4000" Messages="messages" Placement="ToastsPlacement.TopRight" />
+
+
+<div class="container mt-4">
+	<div class="row justify-content-center">
+		<div class="col-lg-6 col-md-12 col-sm-12 mb-4">
+			<Card style="width: 100%;">
+				<CardBody class="text-center shadow">
+					<br />
+					<CardTitle><h2 style="font-weight:bold;"> Engångskod</h2></CardTitle><br />
+					<CardTitle><h4> Skriv in engångskoden för att dela ut kundens gåva</h4></CardTitle><br />
+					<CardText>
+						<EditForm Model="Input" OnValidSubmit="SubmitRedemptionCode" FormName="redemptionC">
+							<DataAnnotationsValidator />
+
+							<div class="form-floating mb-3">
+								<InputNumber @bind-Value="Input.RedemptionCode" class="form-control"
+									aria-required="true" placeholder="¤¤¤¤¤¤" style="text-align:center; font-weight:bold; vertical-align:middle !important; font-size:3.0rem; padding-top:1.25rem !important; padding-bottom:1.25rem !important;"/>
+								<ValidationMessage For="() => Input.RedemptionCode" class="number-danger" />
+							</div>
+							<div class="text-danger">@errorMessage</div>
+							<br /><br />
+							<div class="d-flex justify-content-center">
+								<button type="submit" class="btn btn-warning mr-2">Använd kod</button>
+								<div style="margin-right: 10px;"></div>
+							</div>
+						</EditForm>
+					</CardText>
+				</CardBody>
+			</Card>
+		</div>
+	</div>
+</div>
+
+@code {
+	private InputModel Input = new InputModel();
+	private string errorMessage = string.Empty;
+
+	List<ToastMessage> messages = new List<ToastMessage>();
+	[Inject] protected ToastService ToastService { get; set; } = default!;
+
+	private ToastMessage CreateToastMessage(ToastType toastType)
+	=> new ToastMessage
+		{
+			Type = toastType,
+			Title = "Belöning inlöst!",
+			HelpText = $"{DateTime.Now}",
+			Message = $"Engångskoden är nu registrerad! Tidpunkt: {DateTime.Now}",
+		};
+
+	private ToastMessage CreateErrorToastMessage(string errorMessage)
+	{
+		return new ToastMessage
+			{
+				Type = ToastType.Warning,
+				Title = "Ett fel uppstod, kod ej giltig",
+				HelpText = $"{DateTime.Now}",
+				Message = errorMessage,
+			};
+	}
+
+	private async void SubmitRedemptionCode()
+	{
+		try
+		{
+			if (await RewardRepository.IsCodeActive(Input.RedemptionCode))
+			{
+				if (Input.RedemptionCode > 0 && Input.RedemptionCode < 1000000)
+				{
+					await RewardController.GetRewardByRedemptionCodeAsync(Input.RedemptionCode);
+					ToastService.Notify(CreateToastMessage(ToastType.Success));
+					Input.RedemptionCode = 0;
+				}
+				else
+				{
+					errorMessage = "Ogiltig kod.";
+				}
+			}
+			else
+			{
+				errorMessage = $"Ett fel inträffade, Koden är inte giltig.";
+			}
+		}
+		catch (Exception ex)
+		{
+			errorMessage = $"Ett fel inträffade {ex.Message}";
+			ToastService.Notify(CreateErrorToastMessage(ex.Message));
+		}
+		finally
+		{
+			StateHasChanged();
+		}
+
+	}
+
+
+	private sealed class InputModel
+	{
+
+		[SupplyParameterFromForm]
+		public int RedemptionCode { get; set; }
+	}
+}

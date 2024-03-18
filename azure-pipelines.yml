@@ -1,0 +1,81 @@
+trigger:
+  branches:
+    include:
+    - master
+stages:
+- stage: Build
+  jobs:
+  - job: Build
+    pool:
+      vmImage: 'windows-latest'
+    variables:
+    - name: solution
+      value: '**/*.sln'
+    - name: buildPlatform
+      value: 'Any CPU'
+    - name: buildConfiguration
+      value: 'Release'
+    steps:
+    - task: NuGetToolInstaller@1
+      displayName: 'NuGet Installation'
+    - task: NuGetCommand@2
+      displayName: 'NuGet Restore'
+      inputs:
+        restoreSolution: '$(solution)'
+    - task: VSBuild@1
+      displayName: 'Build Project'
+      inputs:
+        solution: '$(solution)'
+        msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="$(build.artifactStagingDirectory)"'
+        platform: '$(buildPlatform)'
+        configuration: '$(buildConfiguration)'
+    - task: VSTest@2
+      inputs:
+        platform: '$(buildPlatform)'
+        configuration: '$(buildConfiguration)'
+    - task: DotNetCoreCLI@2
+      displayName: 'Install EF tool'
+      inputs:
+        command: 'custom'
+        custom: 'tool'
+        arguments: 'install --global dotnet-ef'
+    - task: DotNetCoreCLI@2
+      displayName: 'Generate SQL Script'
+      inputs:
+        command: 'custom'
+        custom: 'ef'
+        arguments: 'migrations script --idempotent --project $(Build.SourcesDirectory)/BlazorPunchCard/BlazorPunchCard.csproj --context ApplicationDbContext --output $(System.ArtifactsDirectory)/script.sql'
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Artifact'
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+        ArtifactName: 'drop'
+        publishLocation: 'Container'
+- stage: Deploy
+  jobs:
+  - job: Deploy
+    pool:
+      vmImage: 'windows-latest'
+    steps:
+    - task: DownloadBuildArtifacts@1
+      inputs:
+        buildType: 'current'
+        downloadType: 'single'
+        downloadPath: '$(System.ArtifactsDirectory)'
+        artifactName: 'drop'
+    - task: SqlAzureDacpacDeployment@1
+      displayName: 'Update Database'
+      inputs:
+        azureSubscription: 'Azure for Students(20eaf6a0-ef87-4c84-9977-0343d5808c94)'
+        AuthenticationType: 'connectionString'
+        ConnectionString: 'Data Source=blazorpunchcarddbserver.database.windows.net,1433;Initial Catalog=BlazorPunchCard_db;User ID=xstamp_admin;Password=P4ssword!;'
+        deployType: 'SqlTask'
+        SqlFile: '$(System.ArtifactsDirectory)/drop/script.sql'
+    - task: AzureRmWebAppDeployment@4
+      displayName: 'Deploy Application'
+      inputs:
+        ConnectionType: 'AzureRM'
+        azureSubscription: 'Azure for Students(20eaf6a0-ef87-4c84-9977-0343d5808c94)'
+        appType: 'webApp'
+        WebAppName: 'XSTAMP'
+        packageForLinux: '$(System.ArtifactsDirectory)/drop/BlazorPunchCard.zip'

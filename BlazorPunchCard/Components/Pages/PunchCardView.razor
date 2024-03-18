@@ -1,0 +1,213 @@
+﻿@page "/punchcardview"
+@using BlazorPunchCard.Data
+@using BlazorPunchCard.Repositories.Interfaces
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using Shared.Models
+@using BlazorPunchCard.Components.Pages
+@using System.Diagnostics
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@using System.Text
+@using System.ComponentModel.Design
+@inject PunchCardController PunchCardController
+@inject IPunchCardRepository PunchCardRepository
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@inject HttpClient Http
+@inject ApplicationDbContext DbContext
+
+
+
+<link href="css/app.css" rel="stylesheet" />
+<div class="container">
+    <div class="row">
+        @foreach (var punchCard in punchCardList)
+        {
+            <div class="col-md-4 mb-4">
+                <div class="stamp-card h-100 d-flex flex-column">
+                    <div class="stamp-card-header text-center" style="background-color:black; color:white; position: relative;">
+                        @if (!string.IsNullOrEmpty(punchCard.UserPictureUrl))
+                        {
+                            <img src="@punchCard.UserPictureUrl" alt="Uppladdad bild" class="company-picture" style="padding-top: 0.3rem; padding-left: 0.3rem; padding-right: 0.3rem; padding-bottom: 0.3rem;" />
+                        }
+                        <br />
+                        <h3 style="padding-left: 1.5rem;">@punchCard.PunchCardName</h3>
+                        <h8>@punchCard.Reward</h8>
+                    </div>
+                    <div class="stamp-card-body d-flex flex-column justify-content-center">
+                        <div class="text-center">
+                            <h3>@ConvertToRings(punchCard.PunchCardCount)</h3>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                @if (!string.IsNullOrWhiteSpace(punchCard.LinkFacebook))
+                                {
+                                    <a href="@punchCard.LinkFacebook" target="_blank" class="social-link ms-3 me-3">
+                                        <i class="bi bi-facebook" style="font-size: 30px;"></i>
+                                    </a>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(punchCard.LinkInstagram))
+                                {
+                                    <a href="@punchCard.LinkInstagram" target="_blank" class="social-link ms-3 me-3">
+                                        <i class="bi bi-instagram" style="font-size: 30px;"></i>
+                                    </a>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(punchCard.LinkWebsite))
+                                {
+                                    <a href="@punchCard.LinkWebsite" target="_blank" class="social-link ms-3 me-3">
+                                        <i class="bi bi-house" style="font-size: 30px;"></i>
+                                    </a>
+                                }
+                            </div>
+                            <div class="d-flex align-items-center" style="margin-right: 10px;">
+                                <p class="card-text small" style="font-size: 0.8em; padding-right: 0.2rem;">Giltighetstid: @punchCard.DurationEnd.ToString("yyyy/MM/dd")</p>
+                            </div>
+                        </div>
+                        @* <div class="actions">
+                            <a href="@($"/edit/{punchCard.PunchCardId}")"
+                               class="btn btn-warning shadow-none">
+                                Ändra
+                            </a>
+                            <button @onclick="() => OpenConfirmDialog(punchCard.PunchCardId)"
+                                    class="btn btn-danger shadow-none">
+                                Radera
+                            </button>
+                        </div> *@
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@* <DeleteConfirmDialog Show="showConfirmDialog" OnCancel="CancelDelete"
+                     OnOk="DeletePunchCard">
+    <h3>Är du säker på att du vill radera detta stämpelkort?</h3>
+</DeleteConfirmDialog> *@
+
+
+
+@code {
+
+    private List<PunchCardViewModel> punchCardList;
+
+    private int pendingDeletePunchCardId;
+    private bool showConfirmDialog;
+    // private int CompanyId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        punchCardList = new List<PunchCardViewModel>();
+
+        var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        var user = authenticationState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (!string.IsNullOrEmpty(userId))
+            {
+                var items = await (from p in DbContext.PunchCards
+                                   join pc in DbContext.Companies on p.FK_CompanyId equals pc.CompanyId
+                                   join a in DbContext.ApplicationUsers on pc.FK_ApplicationUserId equals a.Id
+                                   where a.Id == userId
+                                   select new
+                                   {
+                                       PunchCardId = p.PunchCardId,
+                                       PunchCardName = p.PunchCardName,
+                                       PunchCardCount = p.PunchCardCount,
+                                       DurationStart = p.DurationStart,
+                                       DurationEnd = p.DurationEnd,
+                                       Reward = p.Reward,
+                                       UserId = a.Id,
+                                       LinkFacebook = p.LinkFacebook,
+                                       LinkInstagram = p.LinkInstagram,
+                                       LinkWebsite = p.LinkWebsite,
+                                       CompanyId = pc.CompanyId
+
+                                   }).ToListAsync();
+
+
+                foreach (var item in items)
+                {
+                    PunchCardViewModel listitem = new PunchCardViewModel();
+                    listitem.PunchCardId = item.PunchCardId;
+                    listitem.PunchCardName = item.PunchCardName;
+                    listitem.PunchCardCount = item.PunchCardCount;
+                    listitem.DurationStart = item.DurationStart;
+                    listitem.DurationEnd = item.DurationEnd;
+                    listitem.Reward = item.Reward;
+                    listitem.UserId = item.UserId;
+                    listitem.LinkFacebook = item.LinkFacebook;
+                    listitem.LinkInstagram = item.LinkInstagram;
+                    listitem.LinkWebsite = item.LinkWebsite;
+                    listitem.CompanyId = item.CompanyId;
+                    punchCardList.Add(listitem);
+                    var userPicture = await DbContext.Pictures.FirstOrDefaultAsync(p => p.FK_ApplicationUserId == userId);
+                    listitem.UserPictureUrl = userPicture?.FileStorageUrl;
+                }
+                
+            }
+        }
+    }
+
+    public MarkupString ConvertToRings(int count)
+    {
+        StringBuilder rings = new StringBuilder();
+        for (int i = 0; i < count; i++)
+        {
+            rings.Append("<i class=\"bi bi-circle\"></i> "); 
+        }
+        return (MarkupString)rings.ToString();
+    }
+    private void EditPunchCard(int punchCardId)
+    {
+        // Implementera redigeringslogik här, till exempel navigering till en redigeringsvy
+    }
+    private void OpenConfirmDialog(int punchCardId)
+    {
+        pendingDeletePunchCardId = punchCardId;
+        showConfirmDialog = true;
+    }
+
+    private void CancelDelete()
+    {
+        showConfirmDialog = false;
+    }
+
+    private async Task DeletePunchCard()
+    {
+        if (pendingDeletePunchCardId > 0)
+        {
+            await PunchCardRepository.DeleteByIdAsync(pendingDeletePunchCardId);
+            showConfirmDialog = false;
+            pendingDeletePunchCardId = 0;
+
+            // // Uppdatera gränssnittet
+            StateHasChanged();
+        }
+    }
+    public class PunchCardViewModel
+    {
+        public int PunchCardId { get; set; }
+        public string PunchCardName { get; set; }
+        public int PunchCardCount { get; set; }
+        public string Reward { get; set; }
+        public string UserId { get; set; }
+        public DateOnly DurationStart { get; set; }
+        public DateOnly DurationEnd { get; set; }
+        public string LinkFacebook { get; set; }
+        public string LinkInstagram { get; set; }
+        public string LinkWebsite { get; set; }
+        public int CompanyId { get; set; }
+        public string UserPictureUrl { get; set; }
+    }
+
+}
+
+
+

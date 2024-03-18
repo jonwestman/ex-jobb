@@ -1,0 +1,161 @@
+﻿@page "/CustomerHome"
+@using BlazorPunchCard.Controller
+@using BlazorPunchCard.Data
+@using Shared.Models
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@rendermode InteractiveServer
+@inject ApplicationDbContext DbContext
+@inject NavigationManager NavigationManager
+@inject PunchController PunchController
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+    <Toasts class="toast-reward" Messages="messages" Placement="ToastsPlacement.TopCenter" /> @*class="p-3" is the original*@
+
+<style>
+    .custom-button-stamp {
+        background-color: #31525B; /* Färg för stämpelkortsknappen */
+        color: #FFFFFF;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .custom-button-reward {
+        background-color: #ffa500; /* Färg för belöningar-knappen */
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    /* css for the toast*/
+    .toast-reward{
+        margin-top:130px !important;
+        width:300px !important;
+    }
+    .bg-white{ /*background container*/
+        border-color: #23455e !important;
+        border-width:3px;
+    }
+    .bg-success{ /*progress bar att bottom*/
+        background-color: #FFF !important;
+        /* opacity:0; */
+    }
+
+    .me-auto{
+        /* margin-right:revert !important; */
+        margin-left:auto !important;
+    }
+
+    .bi-check-circle-fill::before{ /*Green checkbox circle on the card*/
+        opacity:0 !important;
+    }
+
+    .toast-header { /*header container*/
+        background-color: #23455e;
+        color:white;
+        height:75px;
+        font-size:1.7rem;
+    }
+
+    .toast-body { /*body container*/
+        border-radius: 25px;
+        font-size: 1.2rem !important;
+    }
+    .btn-close{ /**/
+        width:0.8rem !important;
+        height:0.8rem !important;
+        opacity:0.2 !important;
+    }
+</style>
+
+
+
+@if (_currentUser != null)
+{
+    <h3 class="text-center">Hej @_currentUser.Name</h3>
+}
+else
+{
+    <h3 class="text-center">Hej</h3>
+}
+
+<div class="d-flex justify-content-center">
+    <div class="col-lg-6 col-md-12 col-sm-12 mb-8" style="border: none;">
+        <div style="width: 100%; background-color: #FFFFFF; padding: 20px;">
+            <p class="text-center">
+                <h5><strong>Här kan du smidigt se dina aktiva stämpelkort och de gåvor du fått.</strong></h5> <br />
+                <h6><strong>Stämplar</strong></h6>
+                <p>För att få en stämpel uppger du ditt telefonnummer i kassan där du handlar. De registrerar då din stämpel.</p>
+                <h6><strong>Belöningar</strong></h6>
+                <p>Du kan även se dina belöningar här. För att lösa ut en belöning uppger du koden som du fått i kassan.</p>
+                <h6><strong>Dela med dig</strong></h6>
+                <p>Om du vill dela med dig av en gåva till nära och kära är det bara att ge bort din kod som då uppges i kassan. Smidigt va!</p>
+            </p>
+        </div>
+    </div>
+</div>
+<div class="d-flex justify-content-center">
+    <button @onclick="GoToPunchCardViewCustomer" class="btn custom-button-stamp m-1">Mina stämpelkort</button>
+    <button @onclick="GoToRewardPage" class="btn custom-button-reward m-1">Mina belöningar</button>
+</div>
+
+@code {
+    private ApplicationUser _currentUser;
+
+    List<ToastMessage> messages = new List<ToastMessage>();
+    [Inject] protected ToastService ToastService { get; set; } = default!;
+
+    private ToastMessage CreateToastMessage(ToastType toastType)
+    => new ToastMessage
+    {
+            Type = toastType,
+            Title = $"GRATTIS!",
+            Message = $"Hej, Bra jobbat, {_currentUser.Name} Du har tjänat ihop till en belöning.",
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity != null && user.Identity.IsAuthenticated)
+        {
+            _currentUser = await UserManager.GetUserAsync(user);
+            if (_currentUser != null)
+            {
+                var userPunchCards = await DbContext.UserPunchCards
+                    .Where(upc => upc.FK_ApplicationUserId == _currentUser.Id)
+                    .Include(upc => upc.PunchCards)
+                    .ThenInclude(pc => pc.Companies)
+                    .ToListAsync();
+
+                var userRewards = await DbContext.Rewards
+                    .Where(r => userPunchCards.Select(upc => upc.UserPunchCardId).Contains(r.FK_UserPunchCardId) && r.IsActive)
+                    .ToListAsync();
+
+                if (userRewards.Any())
+                {
+                    ToastService.Notify(CreateToastMessage(ToastType.Success));
+                }
+            }
+
+        }
+    }
+
+    private void GoToPunchCardViewCustomer()
+    {
+        NavigationManager.NavigateTo("/punchcardviewcustomer");
+    }
+
+    private void GoToRewardPage()
+    {
+        NavigationManager.NavigateTo("/rewardpage");
+    }
+
+    private void StayOnCustomerHomePage()
+    {
+        NavigationManager.NavigateTo("/CustomerHome");
+    }
+}

@@ -1,0 +1,417 @@
+﻿@page "/createpunchcard"
+@using BlazorPunchCard.Controller
+@using BlazorPunchCard.Data
+@using BlazorPunchCard.Repositories.Interfaces
+@using Microsoft.EntityFrameworkCore
+@using Shared.Models
+@using System.ComponentModel.DataAnnotations
+@using System.Diagnostics
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@using System.Text
+@using System.Text.RegularExpressions
+@inject IPunchCardRepository PunchCardRepository
+@inject PunchCardController PunchCardController
+@inject ApplicationDbContext DbContext
+@inject NavigationManager NavigationManager
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@rendermode InteractiveServer
+
+<Toasts class="p-3" Messages="messages" Placement="ToastsPlacement.TopCenter" Style="margin-top:200px !important;"/>
+
+<div class="col-lg-6 col-md-12 col-sm-12 mb-8" style="margin-bottom: 20px;">
+    <Card style="width: 100%;">
+        <CardBody class="text-center shadow">
+            <br />
+            <CardTitle>
+                <h2> Skapa nytt stämpelkort</h2>
+            </CardTitle><br />
+            <CardText>
+                <EditForm Model="@inputModel" OnValidSubmit="AddPunchCard" FormName="punchCardForm">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary class="text-danger" role="alert" />
+
+                    <div class="row mb-2">
+                        <div class="col-md-4">
+                            <label for="punchCardName" class="form-label">Namn på stämpelkort</label>
+                        </div>
+                        <div class="col-md-8">
+                            <InputText id="punchCardName" @bind-Value="@inputModel.PunchCardName"
+                                       class="form-control" aria-required="true" placeholder="Namn" />
+                            <ValidationMessage For="@(() => inputModel.PunchCardName)"
+                                               class="text-danger" />
+                        </div>
+                    </div>
+
+                    <div class="row mb-2">
+                        <div class="col-md-4">
+                            <label for="reward" class="form-label">Erbjudande</label>
+                        </div>
+                        <div class="col-md-8">
+                            <InputText id="reward" @bind-Value="@inputModel.Reward" class="form-control"
+                                       aria-required="true"
+                                       placeholder="Välj kundens belöning!" />
+                            <ValidationMessage For="@(() => inputModel.Reward)" class="text-danger" />
+                        </div>
+                    </div>
+
+                    <div class="row mb-2">
+                        <div class="col-md-4">
+                            <label for="count" class="form-label">Antal stämplar</label>
+                        </div>
+                        <div class="col-md-8">
+                            <InputNumber id="count" @bind-Value="@inputModel.PunchCardCount"
+                                         class="form-control" min="3" max="10" aria-required="true"
+                                         placeholder="Mellan 3 och 10" />
+                            <ValidationMessage For="@(() => inputModel.PunchCardCount)"
+                                               class="text-danger" />
+                        </div>
+                    </div>
+
+                    <div class="row mb-2">
+                        <div class="col-md-4">
+                            <label for="linkInput1" class="form-label">Webbplats</label>
+                        </div>
+                        <div class="col-md-8">
+                            <InputText id="linkInput" @bind-Value="@inputModel.LinkWebsite"
+                                       class="form-control"
+                                       placeholder="Länk för hemsida, https://www.example.com" />
+                            <ValidationMessage For="@(() => inputModel.LinkWebsite)" class="text-danger" />
+                        </div>
+                    </div>
+
+                    <div class="row mb-2">
+                        <div class="col-md-4">
+                            <label for="linkInput2" class="form-label">Instagram</label>
+                        </div>
+                        <div class="col-md-8">
+                            <InputText id="linkInput2" @bind-Value="@inputModel.LinkInstagram" class="form-control" placeholder="Länk för Instagram, https://www.instagram.com/example" />
+                            @if (!string.IsNullOrEmpty(inputModel.LinkInstagram) && !Regex.IsMatch(inputModel.LinkInstagram, @"^(https?://)?([\w-]+\.)+[\w-]+(/[\w- ./?%&=]*)?$"))
+                            {
+                                <p class="text-danger">Instagram-länken är inte en giltig URL.</p>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="row mb-2">
+                        <div class="col-md-4">
+                            <label for="linkInput3" class="form-label">Facebook</label>
+                        </div>
+                        <div class="col-md-8">
+                            <InputText id="linkInput" @bind-Value="@inputModel.LinkFacebook"
+                                       class="form-control"
+                                       placeholder="Länk för Facebook, https://www.facebook.com/example" />
+                            <ValidationMessage For="@(() => inputModel.LinkFacebook)" class="text-danger" />
+                        </div>
+                    </div>
+
+                    <div class="row mb-2">
+                        <div class="col-md-4">
+                            <label for="count" class="form-label">Startdatum</label>
+                        </div>
+                        <div class="col-md-8">
+                            <DateInput TValue="DateOnly" @bind-Value="@inputModel.DurationStart"
+                                       class="form-control" aria-required="true" placeholder="åååå-mm-dd" />
+                            <ValidationMessage For="@(() => inputModel.DurationStart)"
+                                               class="text-danger" />
+                        </div>
+                    </div>
+
+                    <div class="row mb-2">
+                        <div class="col-md-4">
+                            <label for="count" class="form-label">Slutdatum</label>
+                        </div>
+                        <div class="col-md-8">
+                            <DateInput TValue="DateOnly" @bind-Value="@inputModel.DurationEnd"
+                                       class="form-control" placeholder="åååå-mm-dd" />
+                            <ValidationMessage For="@(() => inputModel.DurationEnd)" class="text-danger" />
+                        </div>
+                    </div>
+
+                    <div class="row mb-3" hidden>
+                        <div class="col-md-4">
+                            <label for="company" class="form-label">Företag</label>
+                        </div>
+                        <div class="col-md-8">
+                            <select id="company" @bind="@inputModel.FK_CompanyId" class="form-control">
+                               @*  @if (companyList != null)
+                                {
+                                    foreach (var company in companyList)
+                                    {
+                                        <option value="@company.CompanyId">@company.CompanyName</option>
+                                    }
+                                } *@
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-warning">Skapa Stämpelkort</button>
+                </EditForm>
+            </CardText>
+        </CardBody>
+    </Card>
+</div>
+
+@if (punchCards is null)
+{
+    <div class="book-item border p-3">
+        Laddat stämpelkort. Var vänlig vänta...
+    </div>
+}
+else if (punchCards.Any())
+{
+    foreach (var punchCard in punchCards)
+    {
+        <div class="col-md-4 mb-1">
+            <div class="stamp-card d-flex flex-column">
+                <div class="stamp-card-header text-center" style="background-color:black; color:white;">
+             @*        @if (!string.IsNullOrEmpty(punchCard))
+                    {
+                        <img src="@punchCard." class="company-picture" style="padding-top: 0.3rem; padding-left: 0.3rem; padding-right: 0.3rem; padding-bottom: 0.3rem;" />
+                    } *@
+                   
+                    <h3>@punchCard.PunchCardName</h3>
+                    <h8>@punchCard.Reward</h8> 
+                </div>
+                <div class="stamp-card-body d-flex flex-column justify-content-center">
+                    <div class="text-center">
+                        <h3>@ConvertToRings(punchCard.PunchCardCount)</h3>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            @if (!string.IsNullOrWhiteSpace(punchCard.LinkFacebook))
+                            {
+                                <a href="@punchCard.LinkFacebook" target="_blank" class="social-link ms-3 me-3">
+                                    <i class="bi bi-facebook" style="font-size: 30px;"></i>
+                                </a>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(punchCard.LinkInstagram))
+                            {
+                                <a href="@punchCard.LinkInstagram" target="_blank" class="social-link ms-3 me-3">
+                                    <i class="bi bi-instagram" style="font-size: 30px;"></i>
+                                </a>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(punchCard.LinkWebsite))
+                            {
+                                <a href="@punchCard.LinkWebsite" target="_blank" class="social-link ms-3 me-3">
+                                    <i class="bi bi-house" style="font-size: 30px;"></i>
+                                </a>
+                            }
+                        </div>
+                        <div class="d-flex align-items-center" style="margin-right: 10px;">
+                            <p class="card-text small" style="font-size: 0.8em; padding-right: 0.2rem;">Giltighetstid: @punchCard.DurationEnd.ToString("yyyy/MM/dd")</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <div class="actions">
+            <a href="@($"/edit/{punchCard.PunchCardId}")" class="btn btn-warning shadow-none">Ändra</a>
+            <button @onclick="() => OpenConfirmDialog(punchCard.PunchCardId)" class="btn btn-danger shadow-none">Radera</button>
+        </div>
+        </div>
+
+    }
+
+    <DeleteConfirmDialog Show="showConfirmDialog" OnCancel="CancelDelete" OnOk="DeletePunchCard">
+        <h3>Är du säker på att du vill radera det här Stämpelkortet?</h3>
+    </DeleteConfirmDialog>
+}
+else
+{
+    <div class="punchCard-item border p-3">
+        Inga Stämpelkort funna...
+    </div>
+}
+
+
+@code {
+    private int pendingDeletePunchCardId;
+    private bool showConfirmDialog;
+    private int companyId;
+    private List<PunchCard>? punchCards;
+    private InputModel inputModel = new InputModel();
+    private PunchCard newPunchCard = new PunchCard { Reward = string.Empty };
+    private List<CompanyViewModel> companyList = new();
+    private string userId;
+
+    List<ToastMessage> messages = new List<ToastMessage>();
+    [Inject] protected ToastService ToastService { get; set; } = default!;
+
+    private ToastMessage CreateToastMessage(ToastType toastType)
+    => new ToastMessage
+        {
+            Type = toastType,
+            Title = "Stämpelkort skapat.",
+            HelpText = $"{DateTime.Now}",
+            Message = $"Hej, {inputModel.PunchCardName} har skapats. Tidpunkt: {DateTime.Now}",
+        };
+
+    protected override async Task OnInitializedAsync()
+    {
+        inputModel.DurationStart = DateOnly.FromDateTime(DateTime.Today);
+        inputModel.DurationEnd = DateOnly.FromDateTime(DateTime.Today.AddYears(1));
+
+        AuthenticationState authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        ClaimsPrincipal user = authenticationState.User;
+
+        if ((user.Identity?.IsAuthenticated).GetValueOrDefault(defaultValue: false))
+        {
+            userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (!string.IsNullOrEmpty(userId))
+            {
+                var items = await (from c in DbContext.Companies
+                                   join a in DbContext.ApplicationUsers on c.FK_ApplicationUserId equals a.Id
+                                   where a.Id == userId
+                                   select new
+                                   {
+                                       CompanyId = c.CompanyId,
+                                       CompanyName = c.CompanyName,
+                                       UserId = a.Id,
+                                   }).FirstOrDefaultAsync();
+
+                companyId = items.CompanyId;
+
+                punchCards = await PunchCardRepository.GetPunchCardsByCompanyIdAsync(companyId);
+
+                CompanyViewModel listitem = new CompanyViewModel(items.CompanyId, items.CompanyName, items.UserId);
+                companyList.Add(listitem);
+
+            }
+        }
+    }
+
+    private async Task AddPunchCard()
+    {
+        if (inputModel != null && inputModel.IsValid())
+        {
+            await PunchCardController.AddPunchCardAsync(userId, new PunchCard
+                {
+                    PunchCardName = inputModel.PunchCardName,
+                    Reward = inputModel.Reward,
+                    PunchCardCount = inputModel.PunchCardCount,
+                    FK_CompanyId = inputModel.FK_CompanyId,
+                    LinkWebsite = inputModel.LinkWebsite,
+                    LinkInstagram = inputModel.LinkInstagram,
+                    LinkFacebook = inputModel.LinkFacebook,
+                    DurationStart = inputModel.DurationStart,
+                    DurationEnd = inputModel.DurationEnd,
+                                   
+
+                });
+
+            punchCards.Clear();
+            punchCards = await PunchCardRepository.GetPunchCardsByCompanyIdAsync(companyId);
+
+            ToastService.Notify(CreateToastMessage(ToastType.Success));
+
+            StateHasChanged();
+        }
+    }
+
+    public class CompanyViewModel
+    {
+        public CompanyViewModel(int companyId, string companyName, string userId)
+        {
+            CompanyId = companyId;
+            CompanyName = companyName;
+            UserId = userId;
+        }
+        public int CompanyId { get; init; }
+        public string CompanyName { get; init; }
+        public string UserId { get; init; }
+    }
+
+    private sealed class InputModel
+    {
+        [Required(ErrorMessage = "Stämpelkortsnamn är obligatoriskt.")]
+        [StringLength(50, ErrorMessage = "Företagsnamnet behöver vara mellan 3 - 50 tecken långt", MinimumLength = 3)]
+        public string PunchCardName { get; set; }
+
+        [Required(ErrorMessage = "Erbjudandet är obligatoriskt.")]
+        [StringLength(120, ErrorMessage = "Erbjudandet behöver vara mellan 5 - 120 tecken långt", MinimumLength = 5)]
+        public string Reward { get; set; }
+
+        [Required(ErrorMessage = "Antal Stämplar är obligatoriskt.")]
+        [Range(3, 10, ErrorMessage = "Antal Stämplar måste vara mellan 3 och 10.")]
+        public int PunchCardCount { get; set; }
+
+
+        public string? LinkWebsite { get; set; }
+
+        public string? LinkInstagram { get; set; }
+
+        public string? LinkFacebook { get; set; }
+
+        public DateOnly DurationStart { get; set; }
+        public DateOnly DurationEnd { get; set; }
+
+        public int FK_CompanyId { get; set; }
+        public string? FileStorageUrl { get; set; }
+
+        public bool IsValid()
+        {
+            // Validerar modellen ovan med hjälp av valideringsattribut
+            var validationContext = new ValidationContext(this);
+            var validationResults = new List<ValidationResult>();
+
+            bool isValid = Validator.TryValidateObject(this, validationContext, validationResults, true);
+
+            // Kolla om länkarna ser ut som giltiga URL:er och om de inte gör det, lägg till ett valideringsfel
+            if (!string.IsNullOrEmpty(LinkWebsite) && !Uri.IsWellFormedUriString(LinkWebsite, UriKind.Absolute))
+            {
+                isValid = false;
+                validationResults.Add(new ValidationResult("Webbplatsen är inte en giltig URL.", new[] { nameof(LinkWebsite) }));
+            }
+
+            if (!string.IsNullOrEmpty(LinkInstagram) && !Uri.IsWellFormedUriString(LinkInstagram, UriKind.Absolute))
+            {
+                isValid = false;
+                validationResults.Add(new ValidationResult("Instagram-länken är inte en giltig URL.", new[] { nameof(LinkInstagram) }));
+            }
+
+            if (!string.IsNullOrEmpty(LinkFacebook) && !Uri.IsWellFormedUriString(LinkFacebook, UriKind.Absolute))
+            {
+                isValid = false;
+                validationResults.Add(new ValidationResult("Facebook-länken är inte en giltig URL.", new[] { nameof(LinkFacebook) }));
+            }
+
+            return isValid;
+        }
+    }
+
+    private void OpenConfirmDialog(int punchCardId)
+    {
+        pendingDeletePunchCardId = punchCardId;
+        showConfirmDialog = true;
+    }
+
+    private void CancelDelete()
+    {
+        showConfirmDialog = false;
+    }
+
+    private async Task DeletePunchCard()
+    {
+        if (pendingDeletePunchCardId > 0)
+        {
+            await PunchCardRepository.DeleteByIdAsync(pendingDeletePunchCardId);
+            showConfirmDialog = false;
+            pendingDeletePunchCardId = 0;
+            punchCards = await PunchCardRepository.GetPunchCardsByCompanyIdAsync(companyId);
+            StateHasChanged();
+        }
+    }
+
+    public MarkupString ConvertToRings(int count)
+    {
+        StringBuilder rings = new StringBuilder();
+        for (int i = 0; i < count; i++)
+        {
+            rings.Append("<i class=\"bi bi-circle\"></i> ");
+        }
+        return (MarkupString)rings.ToString();
+    }
+}
