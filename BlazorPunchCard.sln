@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorPunchCard", "BlazorPu
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorPunchCard.Client", "BlazorPunchCard.Client\BlazorPunchCard.Client.csproj", "{7D757104-11F9-4187-93C3-5026A4670CB2}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared", "Shared\Shared.csproj", "{5A1EAD72-0BB0-49A9-BD73-93820A5D6918}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorPunchCard.Tests", "BlazorPunchCard.Tests\BlazorPunchCard.Tests.csproj", "{B5B87CF1-5A5E-44D7-8E78-4E4638B49C27}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,10 +23,10 @@ Global
 		{7D757104-11F9-4187-93C3-5026A4670CB2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7D757104-11F9-4187-93C3-5026A4670CB2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7D757104-11F9-4187-93C3-5026A4670CB2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5A1EAD72-0BB0-49A9-BD73-93820A5D6918}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5A1EAD72-0BB0-49A9-BD73-93820A5D6918}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5A1EAD72-0BB0-49A9-BD73-93820A5D6918}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5A1EAD72-0BB0-49A9-BD73-93820A5D6918}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B5B87CF1-5A5E-44D7-8E78-4E4638B49C27}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B5B87CF1-5A5E-44D7-8E78-4E4638B49C27}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B5B87CF1-5A5E-44D7-8E78-4E4638B49C27}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B5B87CF1-5A5E-44D7-8E78-4E4638B49C27}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
