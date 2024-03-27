@@ -56,6 +56,22 @@ namespace BlazorPunchCard.Tests.Repository
 			// Assert
 			result.Should().NotBeNull();
 			result.Should().BeOfType(typeof(Task<ApplicationUser>));
+			result.IsCompleted.Should().BeTrue();
+		}
+		[Fact]
+		public async void ApplicationUserRepository_GetByPhoneNumber_ReturnsUser() 
+		{
+			// Arrange
+			var phoneNumber = "0701234567";
+			var dbContext = await GetDatabaseContext();
+			var applicationUserRepository = new ApplicationUserRepository(dbContext);
+
+			// Act
+			var result = applicationUserRepository.GetByPhoneNumber(phoneNumber);
+
+			// Assert
+			result.Should().NotBeNull();
+			result.Should().BeOfType<Task<ApplicationUser>>();
 		}
 	}
 }
