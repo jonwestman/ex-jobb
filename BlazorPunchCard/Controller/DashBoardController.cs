@@ -1,10 +1,9 @@
-﻿using BlazorPunchCard.Data;
-using BlazorPunchCard.Data.Models.ViewModels;
+﻿using BlazorPunchCard.Data.Models.ViewModels;
 using BlazorPunchCard.Repositories.Interfaces;
 
 namespace BlazorPunchCard.Controller
 {
-    public class DashBoardController
+	public class DashBoardController
     {
         private readonly IDashBoardRepository _dashBoardRepository;
 

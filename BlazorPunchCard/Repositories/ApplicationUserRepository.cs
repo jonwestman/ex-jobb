@@ -17,7 +17,7 @@ namespace BlazorPunchCard.Repositories
             return user;
         }
         
-        public async Task<ApplicationUser> GetByPhoneNumber(string phoneNumber)
+        public async Task<ApplicationUser?> GetByPhoneNumber(string phoneNumber)
         {
             var user = await _context.ApplicationUsers.FirstOrDefaultAsync(u => u.PhoneNumber == phoneNumber);
             return user;
