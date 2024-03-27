@@ -31,10 +31,6 @@ namespace BlazorPunchCard.Repositories
 
         public Task SaveAsync() => throw new NotImplementedException();
         public Task Update(ApplicationUser entity) => throw new NotImplementedException();
-
-		public Task DeleteByIdAsync(int id)
-		{
-			throw new NotImplementedException();
-		}
+		public Task DeleteByIdAsync(int id) => throw new NotImplementedException();
 	}
 }

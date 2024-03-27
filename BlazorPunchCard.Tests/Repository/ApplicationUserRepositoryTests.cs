@@ -57,6 +57,7 @@ namespace BlazorPunchCard.Tests.Repository
 			result.Should().NotBeNull();
 			result.Should().BeOfType(typeof(Task<ApplicationUser>));
 			result.IsCompleted.Should().BeTrue();
+			result.Result.Id.Should().Be(userId);
 		}
 		[Fact]
 		public async void ApplicationUserRepository_GetByPhoneNumber_ReturnsUser() 
@@ -72,6 +73,21 @@ namespace BlazorPunchCard.Tests.Repository
 			// Assert
 			result.Should().NotBeNull();
 			result.Should().BeOfType<Task<ApplicationUser>>();
+			result.Result.PhoneNumber.Should().Be(phoneNumber);
+		}
+		[Fact]
+		public async void ApplicationUserRepository_GetAll_ReturnsUsers() 
+		{
+			// Arrange
+			var dbContext = await GetDatabaseContext();
+			var applicationUserRepository = new ApplicationUserRepository(dbContext);
+
+			// Act
+			var result = applicationUserRepository.GetAll();
+
+			// Assert
+			result.Should().NotBeNull();
+			result.Should().BeOfType<Task<List<ApplicationUser>>>();
 		}
 	}
 }
