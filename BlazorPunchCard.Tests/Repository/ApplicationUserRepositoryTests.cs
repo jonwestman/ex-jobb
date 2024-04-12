@@ -1,6 +1,5 @@
 ﻿using BlazorPunchCard.Data;
 using BlazorPunchCard.Repositories;
-using BlazorPunchCard.Repositories.Interfaces;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,14 +21,14 @@ public class ApplicationUserRepositoryTests
 				databaseContext.ApplicationUsers.Add(
 					new ApplicationUser()
 					{
-						Id = "1",
+						Id = "2",
 						Name = "Jon Westman",
 						UserName = "jonwestman@hotmail.com",
 						NormalizedUserName = "JONWESTMAN@HOTMAIL.COM",
 						Email = "jonwestman@hotmail.com",
 						NormalizedEmail = "JONWESTMAN@HOTMAIL.COM",
 						EmailConfirmed = true,
-						PhoneNumber = "0701234567"
+						PhoneNumber = "0730625968"
 					});
 				await databaseContext.SaveChangesAsync();
 			}

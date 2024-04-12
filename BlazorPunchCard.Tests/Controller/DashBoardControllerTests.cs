@@ -3,7 +3,6 @@ using BlazorPunchCard.Data.Models.ViewModels;
 using BlazorPunchCard.Repositories.Interfaces;
 using FakeItEasy;
 using FluentAssertions;
-using System.Collections.Generic;
 
 namespace BlazorPunchCard.Tests.Controller;
 

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using BlazorPunchCard.Data.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Shared.Models;
 
@@ -269,12 +270,46 @@ namespace BlazorPunchCard.Data.SeedData
 
             builder.Entity<PunchCard>().HasData(punchCards);
 
-            // -----------------------------------------------------------------------------
+			// -----------------------------------------------------------------------------
 
-            // Seed UserRoles
+			// Seed UserPunchCard
+
+			List<UserPunchCard> userPunchCard = new List<UserPunchCard>()
+			{
+				new UserPunchCard {UserPunchCardId = 1, FK_ApplicationUserId = "1", IsActive = true, FK_PunchCardId = 1 }
+			};
+
+			builder.Entity<UserPunchCard>().HasData(userPunchCard);
+
+			// -----------------------------------------------------------------------------
+
+			// Seed Punches
+
+			List<Punch> punches = new List<Punch>()
+			{
+				new Punch {PunchId = 1, FK_UserPunchCard = 1, PunchTimeRegistered = DateTime.Now }
+			};
+
+			builder.Entity<Punch>().HasData(punches);
+
+			// -----------------------------------------------------------------------------
+
+			// Seed Punches
+
+			List<Reward> rewards = new List<Reward>()
+			{
+				new Reward {RewardId = 1, IsActive = true, FK_UserPunchCardId = 1, RedemptionCode = 123456, TimeRegistered = DateTime.Now, TypeOfReward = "One free book"},
+				new Reward {RewardId = 2, IsActive = false, FK_UserPunchCardId = 1, RedemptionCode = 234567, TimeRegistered = DateTime.Now, TypeOfReward = "Two free books"}
+			};
+
+			builder.Entity<Reward>().HasData(rewards);
+
+			// -----------------------------------------------------------------------------
+
+			// Seed UserRoles
 
 
-            List<IdentityUserRole<string>> userRoles = new List<IdentityUserRole<string>>();
+			List<IdentityUserRole<string>> userRoles = new List<IdentityUserRole<string>>();
 
             // Add Password For All Users
 
