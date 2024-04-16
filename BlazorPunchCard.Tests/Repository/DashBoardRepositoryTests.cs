@@ -25,23 +25,7 @@ public class DashBoardRepositoryTests
 			.Options;
 		var databaseContext = new ApplicationDbContext(options);
 		databaseContext.Database.EnsureCreated();
-		if (await databaseContext.UserPunchCards.CountAsync() < 0)
-		{
-			for (int i = 0; i < 10; i++)
-			{
-
-				databaseContext.UserPunchCards.Add(
-					new UserPunchCard()
-					{
-						UserPunchCardId = 1,
-						IsActive = true,
-						FK_ApplicationUserId = "1",
-						FK_PunchCardId = 1
-					});
-				await databaseContext.SaveChangesAsync();
-			}
-		}
-
+	
 			return databaseContext;
 	}
 
