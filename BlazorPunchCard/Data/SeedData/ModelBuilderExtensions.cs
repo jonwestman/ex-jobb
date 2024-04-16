@@ -276,7 +276,9 @@ namespace BlazorPunchCard.Data.SeedData
 
 			List<UserPunchCard> userPunchCard = new List<UserPunchCard>()
 			{
-				new UserPunchCard {UserPunchCardId = 1, FK_ApplicationUserId = "1", IsActive = true, FK_PunchCardId = 1 }
+				new UserPunchCard {UserPunchCardId = 1, FK_ApplicationUserId = "1", IsActive = true, FK_PunchCardId = 1 },
+				new UserPunchCard {UserPunchCardId = 2, FK_ApplicationUserId = "1", IsActive = true, FK_PunchCardId = 1 },
+				new UserPunchCard {UserPunchCardId = 3, FK_ApplicationUserId = "1", IsActive = false, FK_PunchCardId = 1 }
 			};
 
 			builder.Entity<UserPunchCard>().HasData(userPunchCard);
