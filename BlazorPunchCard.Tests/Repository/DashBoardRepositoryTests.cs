@@ -76,6 +76,7 @@ public class DashBoardRepositoryTests
 		// Assert
 		result.Should().NotBeNull();
 		result.Should().BeOfType<Task<int>>();
+		result.Result.Should().Be(3);
 	}
 
 	[Fact]
@@ -92,6 +93,7 @@ public class DashBoardRepositoryTests
 		// Assert
 		result.Should().NotBeNull();
 		result.Should().BeOfType<Task<int>>();
+		result.Result.Should().Be(2);
 	}
 
 	[Fact]
@@ -108,5 +110,6 @@ public class DashBoardRepositoryTests
 		// Assert
 		result.Should().NotBeNull();
 		result.Should().BeOfType<Task<int>>();
+		result.Result.Should().Be(1);
 	}
 }
