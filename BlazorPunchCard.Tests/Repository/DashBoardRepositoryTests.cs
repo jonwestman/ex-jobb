@@ -58,6 +58,7 @@ public class DashBoardRepositoryTests
 
 		// Assert
 		result.Should().BeOfType(typeof(List<DashBoardViewModel>));
+		result.Should().HaveCount(3);
 
 	}
 
