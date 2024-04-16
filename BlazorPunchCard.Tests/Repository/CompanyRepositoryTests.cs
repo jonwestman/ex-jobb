@@ -28,12 +28,12 @@ public class CompanyRepositoryTests
 		var companyRepository = new CompanyRepository(dbContext);
 
 		// Act
-		var result = await companyRepository.GetCompanyByUserId(userId);
+		var result = companyRepository.GetCompanyByUserId(userId);
 
 		// Assert
 		result.Should().NotBeNull();
 		result.Should().BeOfType<Task<Company>>();
-		result.CompanyName.Should().Be("BokHörnan");
-		result.CompanyId.Should().Be(11);
+		result.Result.CompanyName.Should().Be("BokHörnan");
+		result.Result.CompanyId.Should().Be(11);
 	}
 }
