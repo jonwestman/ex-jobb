@@ -59,7 +59,6 @@ public class DashBoardRepositoryTests
 		// Assert
 		result.Should().BeOfType(typeof(List<DashBoardViewModel>));
 		result.Should().HaveCount(3);
-
 	}
 
 	[Fact]
@@ -70,12 +69,18 @@ public class DashBoardRepositoryTests
 		var dbContext = await GetDbContext();
 		var dashBoardRepository = new DashBoardRepository(dbContext, _punchRepository);
 
+		// Mock data setup
+		dbContext.UserPunchCards.Add(new UserPunchCard { IsActive = true, FK_PunchCardId = 1 });
+		dbContext.UserPunchCards.Add(new UserPunchCard { IsActive = false, FK_PunchCardId = 1 });
+		await dbContext.SaveChangesAsync();
+
 		// Act
 		var result = dashBoardRepository.GetNumberOfActivePunchCards(companyId);
 
 		// Assert
 		result.Should().NotBeNull();
 		result.Should().BeOfType<Task<int>>();
+		result.Result.Should().Be(2);
 	}
 
 	[Fact]
