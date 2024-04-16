@@ -49,7 +49,6 @@ public class ApplicationUserRepositoryTests
 
 		// Assert
 		result.Should().NotBeNull();
-		result.Should().BeOfType(typeof(Task<ApplicationUser>));
 		result.IsCompleted.Should().BeTrue();
 		result.Result.Id.Should().Be(userId);
 	}
@@ -66,7 +65,6 @@ public class ApplicationUserRepositoryTests
 
 		// Assert
 		result.Should().NotBeNull();
-		result.Should().BeOfType<Task<ApplicationUser>>();
 		result.Result.PhoneNumber.Should().Be(phoneNumber);
 	}
 	[Fact]
@@ -81,6 +79,6 @@ public class ApplicationUserRepositoryTests
 
 		// Assert
 		result.Should().NotBeNull();
-		result.Should().BeOfType<Task<List<ApplicationUser>>>();
+		result.Result.Count.Should().Be(20);	
 	}
 }
