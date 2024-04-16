@@ -1,10 +1,7 @@
-﻿using BlazorPunchCard.Data.Models;
-using BlazorPunchCard.Data;
-using BlazorPunchCard.Repositories.Interfaces;
-using FakeItEasy;
-using Microsoft.EntityFrameworkCore;
+﻿using BlazorPunchCard.Data;
 using BlazorPunchCard.Repositories;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using Shared.Models;
 
 namespace BlazorPunchCard.Tests.Repository;
@@ -31,12 +28,12 @@ public class CompanyRepositoryTests
 		var companyRepository = new CompanyRepository(dbContext);
 
 		// Act
-		var result = companyRepository.GetCompanyByUserId(userId);
+		var result = await companyRepository.GetCompanyByUserId(userId);
 
 		// Assert
 		result.Should().NotBeNull();
 		result.Should().BeOfType<Task<Company>>();
-		result.Result.CompanyName.Should().Be("BokHörnan");
-		result.Result.CompanyId.Should().Be(11);
+		result.CompanyName.Should().Be("BokHörnan");
+		result.CompanyId.Should().Be(11);
 	}
 }
